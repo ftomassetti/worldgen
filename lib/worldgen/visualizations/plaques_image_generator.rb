@@ -20,22 +20,20 @@ end
 	width = 300
 	height = 300
 	n_hot_points = 35 
-	path = "plaques_#{width}x#{height}_hp#{n_hot_points}_seed#{seed}.plaques"
+	path = "examples/plaques_#{width}x#{height}_hp#{n_hot_points}_seed#{seed}.plaques"
 	plaques = load_marshal_file(path)
-	outpath = "plaques_#{width}x#{height}_hp#{n_hot_points}_seed#{seed}.png"
+	outpath = "examples/plaques_#{width}x#{height}_hp#{n_hot_points}_seed#{seed}.png"
 	desc = "Plaques unpolished. Dim: #{width}x#{height}, Hot Points: #{n_hot_points}, Seed: #{seed}"
 	generate_plaques_image(width,height,plaques,outpath,desc)
 end
-
-return
 
 (1..5).each do |seed|
 	width = 300
 	height = 300
 	n_hot_points = 35 
-	path = "plaques_#{width}x#{height}_hp#{n_hot_points}_seed#{seed}_polished.plaques"
+	path = "examples/plaques_#{width}x#{height}_hp#{n_hot_points}_seed#{seed}_polished.plaques"
 	plaques = load_marshal_file(path)
-	outpath = "plaques_#{width}x#{height}_hp#{n_hot_points}_seed#{seed}_polished.png"
+	outpath = "examples/plaques_#{width}x#{height}_hp#{n_hot_points}_seed#{seed}_polished.png"
 	desc = "Plaques polished. Dim: #{width}x#{height}, Hot Points: #{n_hot_points}, Seed: #{seed}"
 	generate_plaques_image(width,height,plaques,outpath,desc)
 end

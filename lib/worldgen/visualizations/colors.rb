@@ -33,7 +33,9 @@ class Colors
 			[250,141,135,73],
 			[125,14,128,14],
 			[0,6,89,6],
-			[-4000,0,0,255]
+			[-200,70,230,200],
+			[-4000,0,0,255],
+			[-10000,37,14,128]
 
 			#[4000,255,255,255],
 			#[0,0,0,0]
@@ -42,7 +44,7 @@ class Colors
 
 	def calc(alt)
 		# ex. 3000
-		return Color.new(0,0,255) if alt<=-4000
+		return Color.new(0,0,255) if alt<=-10000
 		return Color.new(245,245,255) if alt>=6000
 		li = -1
 		@limits.each_with_index do |arr,i|

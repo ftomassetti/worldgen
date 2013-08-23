@@ -10,30 +10,6 @@ java_import java.awt.Dimension
 java_import javax.swing.JPanel
 java_import java.awt.Color
 
-def rescale(curr,curr_w,curr_h,desired_w,desired_h)
-	build_map(desired_w,desired_h, Proc.new do |x,y|
-		original_x = ((x.to_f/desired_w.to_f)*curr_w).floor
-		original_y = ((y.to_f/desired_h.to_f)*curr_h).floor
-		curr[original_y][original_x]
-	end)
-end
-
-def antialias(map,w,h,ntimes=1)
-	Rectangle.new(w,h).each do |x,y|
-		puts "antialiasing #{ntimes}, y=#{y}" if x==0 and (y%25)==0
-		sum = 0
-		n = 0
-		each_around([x,y]) do |ax,ay|
-			if ax>=0 and ay>=0 and ax<w and ay<h
-				n+=1
-				sum+=map[ay][ax]
-			end
-		end
-		map[y][x] = (sum.to_f/n.to_f).to_i
-	end
-	antialias(map,w,h,ntimes-1) if ntimes>1
-end
-
 def zoom(level,&original)
 	Proc.new do |x,y|
 		original.call(x/level,y/level)

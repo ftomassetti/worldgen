@@ -6,6 +6,14 @@ require 'worldgen/map'
 
 module WorldGen
 
+def plaques_at_border_of_the_map(w,h,plaques)
+	border_plaques = Set.new
+	Rectangle.new(w,h).each_border_point do |x,y|
+		border_plaques << plaques[y][x]
+	end
+	border_plaques
+end
+
 def number_of_plaques(w,h,plaques)
 	max = -1
 	each_in_map(w,h,plaques) do |x,y,plaque_index|

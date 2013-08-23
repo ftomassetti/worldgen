@@ -34,7 +34,7 @@ end
 	plaques = load_marshal_file(path)
 	log "Unpolished plaques loaded"
 
-	perfom_polishing(width,height,plaques,"#{width}x#{height}_hp#{n_hot_points}_seed#{seed})",seed)
+	perfom_polishing(width,height,plaques,"#{width}x#{height}_hp#{n_hot_points}_seed#{seed}",seed)
 end
 
 puts "done."
