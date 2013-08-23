@@ -1,0 +1,8 @@
+.autotest
+History.txt
+Manifest.txt
+README.txt
+Rakefile
+bin/worldgen
+lib/worldgen.rb
+test/test_worldgen.rb
