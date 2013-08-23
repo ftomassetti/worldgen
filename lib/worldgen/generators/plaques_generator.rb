@@ -1,6 +1,6 @@
 # Program to perform initial generation of plaques
 
-require 'worldgen/map_drawing'
+require 'worldgen/visualizations/map_drawing'
 require 'worldgen/plaques'
 require 'worldgen/math'
 
@@ -24,8 +24,10 @@ def perfom_generation(width,height,n_hot_points,disturb_strength,seed)
 	outpath = "plaques_#{width}x#{height}_hp#{n_hot_points}_seed#{seed}.plaques"
 	File.open(outpath, 'wb') {|file| Marshal.dump(plaques,file) } 
 
-	mf = MapFrame.new('Plaques seed #{seed}', width, height, draw_code)
+	mf = MapFrame.new("Plaques seed #{seed}", width, height, draw_code)
 	mf.launch
 end
 
 (1..5).each {|seed| perfom_generation(300,300,35,25,seed) }
+
+puts "done."

@@ -6,6 +6,14 @@ require 'worldgen/map'
 
 module WorldGen
 
+def number_of_plaques(w,h,plaques)
+	max = -1
+	each_in_map(w,h,plaques) do |x,y,plaque_index|
+		max=plaque_index if plaque_index>max
+	end
+	max+1
+end
+
 def points_of_plaque(w,h,map,index)
 	points = []
 	Rectangle.new(w,h).each do |x,y|
@@ -67,6 +75,114 @@ def disturb_distances_map(w,h,hot_points,distances_map,disturb_strength)
 			end
 		end
 		sel_i
+	end
+end
+
+def polish_plaques(w,h,plaques)
+	log "Breaking plaques in blocks"
+	break_plaques_in_blocks(w,h,plaques)
+	log "Inglobing surrounded block"
+	inglobe_surrounded_blocks(w,h,plaques)
+end
+
+def points_of_the_plaque(w,h,plaques,plaque_index)
+	points = []
+	each_in_map(w,h,plaques) do |x,y,val|
+		points << [x,y] if val==plaque_index
+	end
+	points
+end
+
+def expand_block(w,h,map,block,p,val)
+	return if block.include? p
+	block << p
+	r = Rectangle.new w,h
+	each_around_limited(p) do |x,y|
+		if r.include? [x,y]
+			expand_block(w,h,map,block,[x,y],val) if map[y][x] == val
+		end
+	end
+end
+
+# Each plaque having not contiguos points is broken
+def break_plaques_in_blocks(w,h,plaques)
+	n_plaques = number_of_plaques(w,h,plaques)
+	plaque_index=0
+	while plaque_index<n_plaques
+		log "breaking plaque #{plaque_index}"
+		all_points = points_of_the_plaque(w,h,plaques,plaque_index)
+		if all_points.count>0
+			start_point = all_points[0]
+			main_block = []
+			expand_block(w,h,plaques,main_block,start_point,plaque_index)
+			toremove = all_points.select {|p| not main_block.include? p}			
+			if toremove.count>0
+				log "plaque to be broken, #{toremove.count} points removed, #{main_block.count} kept"
+				toremove.each {|p| x,y=p; plaques[y][x] = n_plaques}
+				n_plaques += 1				
+			end			
+		end
+		plaque_index += 1
+	end
+end
+
+def get_first_neighbor_in_dir(w,h,plaques,start_point,dir)
+	x,y = start_point
+	my_plaque_index = plaques[y][x]
+
+	while true
+		next_x = x+dir[0]
+		next_y = y+dir[1]
+		next_point = [next_x,next_y]
+		if Rectangle.new(w,h).include?(next_point)
+			other_plaque_index = plaques[next_y][next_x]
+			if other_plaque_index!=my_plaque_index
+				return other_plaque_index
+			else
+				x = next_x
+				y = next_y
+			end
+		else
+			return nil
+		end
+	end
+end
+
+def get_first_neighbors_in_all_dirs(w,h,plaques,start_point)
+	[get_first_neighbor_in_dir(w,h,plaques,start_point,[0,-1]),
+		get_first_neighbor_in_dir(w,h,plaques,start_point,[1,0]),
+		get_first_neighbor_in_dir(w,h,plaques,start_point,[0,1]),
+		get_first_neighbor_in_dir(w,h,plaques,start_point,[-1,0])]
+end
+
+def container_inglobing_points(w,h,plaques,all_points)
+	all_neighbors = []
+	all_points.each do |p|
+		new_neighbours = get_first_neighbors_in_all_dirs(w,h,plaques,p)
+		new_neighbours.select {|v| v!=nil}.each {|v| all_neighbors << v unless all_neighbors.include?(v)}
+		if all_neighbors.count>1
+			return nil # more than one neighbour
+		end
+	end
+	parent = all_neighbors[0]
+	raise "Wrong! #{parent} (#{parent.class})" unless parent.is_a? Fixnum
+	parent
+end
+
+# If a glob is totally contained by another block, the inner block become part of the outer block
+def inglobe_surrounded_blocks(w,h,plaques)
+	n_plaques = number_of_plaques(w,h,plaques)
+	n_plaques.times do |plaque_index|
+		log "considering for inglobation #{plaque_index}"
+		all_points = points_of_the_plaque(w,h,plaques,plaque_index)		
+		if all_points.count>0						
+			parent = container_inglobing_points(w,h,plaques,all_points)
+			if parent
+				# ok, inglobe
+				log "Going to inglone #{plaque_index} in #{parent}"
+				all_points.each {|p| x,y=p; plaques[y][x] = parent}
+			end
+		end
 	end
 end
 

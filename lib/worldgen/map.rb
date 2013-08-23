@@ -1,11 +1,19 @@
 module WorldGen
 
+def each_in_map(w,h,map,&block)
+	h.times do |y|
+		w.times do |x|
+			block.call(x,y,map[y][x])			
+		end
+	end
+end
+
 def build_map(w,h,desc='building a map',&block)
 	alt = []
-	(0..(h-1)).each do |y|
+	h.times do |y|
 		log "#{desc}, line #{y} of #{h}" if y%STEP_LINES==0
 		row = []
-		(0..(w-1)).each do |x|
+		w.times.each do |x|
 			row[x] = block.call(x,y)			
 		end
 		alt[y] = row

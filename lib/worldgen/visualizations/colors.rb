@@ -1,3 +1,5 @@
+require 'worldgen/math'
+
 module WorldGen
 
 def mix_color(a,b,p)
@@ -74,6 +76,25 @@ class BwColors < Colors
 			[0,0,0,0]
 		]
 	end
+end
+
+class GraduatedColors < Colors
+
+	def initialize(n_colors)
+		super()
+		@n_colors = n_colors
+		@n_color_intervals = (cube_root(n_colors).floor) +1
+		@color_mul = 255.0/@n_color_intervals.to_f
+	end
+
+	def calc(val)
+		val_in_base = to_base(val,@n_color_intervals,3)
+		r = @color_mul * val_in_base[2]
+		g = @color_mul * val_in_base[1]
+		b = @color_mul * val_in_base[0]
+		Color.new r.to_i,g.to_i,b.to_i
+	end
+
 end
 
 end
