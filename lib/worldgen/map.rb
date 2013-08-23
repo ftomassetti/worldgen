@@ -2,6 +2,15 @@ require 'worldgen/log'
 
 module WorldGen
 
+def print_map(w,h,map,title)
+	puts "= map #{title} ="
+	h.times do |y|
+		print "#{y}] "
+		w.times {|x| print "#{map[y][x]} "}
+		print "\n"
+	end
+end
+
 def each_in_map(w,h,map,&block)
 	h.times do |y|
 		w.times do |x|
@@ -10,10 +19,10 @@ def each_in_map(w,h,map,&block)
 	end
 end
 
-def build_map(w,h,desc='building a map',&block)
+def build_map(w,h,desc=nil,&block)
 	alt = []
 	h.times do |y|
-		log "#{desc}, line #{y} of #{h}" if y%STEP_LINES==0
+		log "#{desc}, line #{y} of #{h}" if y%STEP_LINES==0 and desc
 		row = []
 		w.times.each do |x|
 			row[x] = block.call(x,y)			
