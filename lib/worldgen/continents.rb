@@ -4,7 +4,7 @@ require 'worldgen/combined_perlin'
 
 module WorldGen
 
-def add_noise!(w,h,map,seed)
+def add_noise(w,h,map,seed)
 	cp = CombinedPerlin.new 3,seed,4,256,[1,2,3]
 	derive_map_from_map(map,w,h) do |x,y,orig_val|
 		xp = 4.0*(x.to_f/w.to_f)

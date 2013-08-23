@@ -1,3 +1,5 @@
+require 'worldgen/log'
+
 module WorldGen
 
 def each_in_map(w,h,map,&block)

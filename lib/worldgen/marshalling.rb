@@ -1,6 +1,7 @@
 module WorldGen
 
 def load_marshal_file(path)
+	raise "Unexisting file: #{path}" unless File.exists? path
 	data = []
 	File.open(path, 'rb') {|file| data = Marshal.load(file) }
 	data

@@ -21,7 +21,7 @@ def perform_continental_base_noise_addition(cb_w,cb_h,continental_base,target_w,
 
 	# noise addition
 	log "adding noise..."
-	add_noise!(target_w,target_h,map,seed)	
+	map = add_noise(target_w,target_h,map,seed)	
 
 	colors = Colors.new
 	draw_code = Proc.new do |x,y|
