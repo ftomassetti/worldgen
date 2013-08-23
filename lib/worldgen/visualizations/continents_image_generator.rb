@@ -24,7 +24,6 @@ end
 	height = 300
 	path = "examples/continental_base_#{seed}.contbase"
 	map = load_marshal_file(path)
-	puts "MAP #{map.class} #{seed}"
 	outpath = "examples/continental_base_#{width}x#{height}_#{seed}.png"
 	desc = "Continental base. Dim: #{width}x#{height}, Seed: #{seed}"
 	generate_continents_image(width,height,map,outpath,desc)
