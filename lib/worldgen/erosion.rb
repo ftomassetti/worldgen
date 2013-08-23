@@ -26,12 +26,13 @@ def erosion(w,h,map,n_cycles)
 	water_map = calc_initial_water_map(w,h,map)
 	#sediment_map = build_fixed_map(w,h)
 	sediment_map = calc_initial_sediment_map(w,h,water_map)
-	n_cycles.times { erosion_cycle(w,h,map,sediment_map,water_map) }
+	n_cycles.times { |i|puts "Erosion #{i}";erosion_cycle(w,h,map,sediment_map,water_map) }
 	[water_map,sediment_map]
 end
 
 $rain_amount = 100
-$solubility = 0.05
+$rain_solubility = 0.01
+$solubility = 0.00001
 $evaporation = 0.99
 $capacity = 0.02
 
@@ -39,24 +40,25 @@ def erosion_cycle(w,h,map,sediment_map,water_map)
 	difference_map = build_fixed_map(w,h)
 	water_map_diff = build_fixed_map(w,h) 
 	sediment_map_diff = build_fixed_map(w,h) 
+	strength_entering_map = build_fixed_map(w,h)
 
 	r = Rectangle.new w,h
 
 	# 1. add rain_amount to each cell of the water_map
 	r.each {|x,y| water_map[y][x] += $rain_amount }
 
-	print_map(w,h,water_map,"STEP 1 water map after rain")
+	#print_map(w,h,water_map,"STEP 1 water map after rain")
 
-	# 2. erosion (fixed amount for everyone) to difference and sediment
+	# 2. rain erosion
 	r.each do |x,y| 
-		if map[y][x]>0.0
-			soluted_terrain = $solubility*water_map[y][x]
+		if map[y][x]>0.0 # ocean is not eroded by rain
+			soluted_terrain = $rain_solubility*$rain_amount
 			difference_map[y][x] -= soluted_terrain
 			sediment_map[y][x]   += soluted_terrain
 		end
 	end
 
-	print_map(w,h,sediment_map,"STEP 1 Sediment map")
+	#print_map(w,h,sediment_map,"STEP 1 Sediment map")
 
 	# 3. movement
 	r.each do |x,y|
@@ -79,38 +81,45 @@ def erosion_cycle(w,h,map,sediment_map,water_map)
 				o[3]*1000+o[2] # consider first altww then alt
 			end
 			o_x,o_y,o_alt,o_alt_with_water = others.first
-			puts "STEP 3, [#{x},#{y}] #{alt}m (#{alt_with_water}m ww) moving toward [#{o_x},#{o_y}] (#{o_alt}m, #{o_alt_with_water}m ww)"
+	#		puts "STEP 3, [#{x},#{y}] #{alt}m (#{alt_with_water}m ww) moving toward [#{o_x},#{o_y}] (#{o_alt}m, #{o_alt_with_water}m ww)"
 			if o_alt_with_water+my_water<=alt
-				# move all
-				water_map_diff[y][x] = 0
-				water_map_diff[o_y][o_x] += my_water
-				sediment_map_diff[o_y][o_x] += sediment_map[y][x]
-				sediment_map_diff[y][x] -=  sediment_map[y][x]
-
-				puts "\tmoving all the water and sediment #{my_water} water, #{sediment_map[y][x]} sediment"
+				moved_water = my_water
 			else
 				diff = (alt_with_water-o_alt_with_water)
-				moved = diff/2.0	
-				water_map_diff[y][x] -= moved
-				water_map_diff[o_y][o_x] += moved
-				p = moved/my_water
-				sediment_map_diff[o_y][o_x] += p*sediment_map[y][x]
-				sediment_map_diff[y][x] -=     p*sediment_map[y][x]					
-
-				puts "\tmoving part of the water and sediment #{moved} water, #{p*sediment_map[y][x]} sediment"
+				moved_water = diff/2.0	
 			end
+
+			water_map_diff[y][x] -= moved_water
+			water_map_diff[o_y][o_x] += moved_water
+			p = moved_water/my_water
+			sediment_map_diff[o_y][o_x] += p*sediment_map[y][x]
+			sediment_map_diff[y][x]     -= p*sediment_map[y][x]					
+	#		puts "\tmoving part of the water and sediment #{moved_water} water, #{p*sediment_map[y][x]} sediment"
+			strength_entering_map[o_y][o_x] += (alt_with_water-o_alt_with_water)*moved_water
 		else
-			puts "STEP 3, [#{x},#{y}] #{alt}m, lowest point -> no movement"
+	#		puts "STEP 3, [#{x},#{y}] #{alt}m, lowest point -> no movement"
 		end
 	end
 #	end
+
+	#print_map(w,h,strength_entering_map,"STEP 3 strength_entering_map")	
 
 	r.each do |x,y| 
 		water_map[y][x] += water_map_diff[y][x]
 		sediment_map[y][x] += sediment_map_diff[y][x]
 	end
 
-	print_map(w,h,water_map,"STEP 4 water map before evaporation")	
+	# 3b. flux erosion
+	r.each do |x,y| 
+		#if map[y][x]>0.0 # ocean is not eroded by rain
+		soluted_terrain = $solubility*strength_entering_map[y][x]
+		#puts "Soluted terrain by flux #{x},#{y} #{soluted_terrain}"
+		difference_map[y][x] -= soluted_terrain
+		sediment_map[y][x]   += soluted_terrain
+		#end
+	end
+
+	#print_map(w,h,water_map,"STEP 4 water map before evaporation")	
 
 	# 4. evaporation
 	r.each do |x,y| 
@@ -123,9 +132,9 @@ def erosion_cycle(w,h,map,sediment_map,water_map)
 		water_map[y][x] -= evaporable_water*(1.0-$evaporation)
 	end
 	r.each do |x,y| 
-		sediment_in_the_water = water_map[y][x]*$capacity
+		sediment_in_the_water = water_map[y][x]*$capacity*(1+strength_entering_map[y][x]**0.1)
 		sediment_to_deposit = sediment_map[y][x]-sediment_in_the_water
-		puts "STEP 4, [#{x},#{y}] sediment #{sediment_map[y][x]}, remaining in the water #{sediment_in_the_water}, to deposit #{sediment_to_deposit}"
+		#puts "STEP 4, [#{x},#{y}] sediment #{sediment_map[y][x]}, remaining in the water #{sediment_in_the_water}, to deposit #{sediment_to_deposit}"
 
 		if sediment_to_deposit>0
 			sediment_map[y][x] -= sediment_to_deposit
