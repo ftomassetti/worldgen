@@ -24,12 +24,12 @@ def perform_continental_base_calculation(w,h,plaques,seed)
 	mf.launch
 end
 
-(1..5).each do |seed| 
+(6..8).each do |seed| 
 	log "Calculating continental base with seed #{seed}"
 	width = 300
 	height = 300
-	n_hot_points = 35 
-	path = "examples/plaques_#{width}x#{height}_hp#{n_hot_points}_seed#{seed}_polished.plaques"
+	n_hot_points = 25 
+	path = "examples/plates_#{width}x#{height}_hp#{n_hot_points}_seed#{seed}_polished.plaques"
 	plaques = load_marshal_file(path)
 	perform_continental_base_calculation(width,height,plaques,seed) 
 end

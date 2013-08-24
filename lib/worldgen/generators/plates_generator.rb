@@ -1,12 +1,13 @@
 # Program to perform initial generation of plaques
 
-require 'worldgen/visualizations/map_drawing'
-require 'worldgen/plaques'
+require 'worldgen/plates'
 require 'worldgen/math'
+require 'worldgen/visualizations/map_drawing'
+require 'worldgen/visualizations/colors'
 
 include WorldGen
 
-$SAVING = false
+$SAVING = true
 
 def perfom_generation(width,height,n_hot_points,disturb_strength,seed)
 	plates = generate_plaques(width,height,n_hot_points,disturb_strength,seed)
@@ -20,14 +21,14 @@ def perfom_generation(width,height,n_hot_points,disturb_strength,seed)
 	end
 
 	if $SAVING
-		outpath = "plaques_#{width}x#{height}_hp#{n_hot_points}_seed#{seed}.plaques"
+		outpath = "examples/plates_#{width}x#{height}_hp#{n_hot_points}_seed#{seed}.plaques"
 		File.open(outpath, 'wb') {|file| Marshal.dump(plates,file) } 
 	end
 
-	mf = MapFrame.new("Plaques seed #{seed}", width, height, draw_code)
+	mf = MapFrame.new("Plates seed #{seed}", width, height, draw_code)
 	mf.launch
 end
 
-(6..6).each {|seed| perfom_generation(300,300,35,25,seed) }
+(6..8).each {|seed| perfom_generation(300,300,25,25,seed) }
 
 puts "done."
