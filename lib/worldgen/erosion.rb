@@ -39,11 +39,15 @@ $capacity = 0.02
 class Particle
 	attr_reader :mass
 	attr_reader :pos
+	attr_reader :prov_alt
+	attr_reader :prov_pos
 
 	def initialize(pos)
 		@pos = pos
 		@speed = 1.0
-		@mass  = 0.01
+		@mass  = 0.5
+		@prov_alt = nil
+		@prov_pos = nil
 	end
 
 	def move(w,h,map)
@@ -64,39 +68,59 @@ class Particle
 			diff_alt = my_alt-arounds.first[2]
 			instantaneous_speed = Math.log(diff_alt,10)
 			@speed = (@speed*4+instantaneous_speed*1)/5.0
-			if @speed > 1.5
-				erosion = 10.0
+			speed_th = 0.5
+			if @speed > speed_th
+				erosion = (@speed-speed_th)*0.25
 				map[dest[1]][dest[0]] -= erosion
+				each_around(dest) do |ax,ay| 
+					if [ax,ay]!=@pos and my_alt>map[ay][ax]
+						map[ay][ax] -= (erosion/2.0) 
+					end
+				end
 				#puts "removing #{erosion} at #{dest[1]},#{dest[0]}"
 				@mass += erosion
 			end
+			@prov_alt = my_alt
+			@prov_pos = @pos
 			@pos = dest
 		end
 		dest_alt and dest_alt>=0.0 
+	end
+
+	def update_water_map(water_map)
+		water_map[@pos[1]][@pos[0]] += @mass
 	end
 end
 
 def particles_erosion(w,h,map,n_particles)
 	r = Rectangle.new w,h
 	rs = Random.new 1
+	water_map = build_fixed_map(w,h)
 	n_particles.times do |i|
-		puts "particles #{i}" if i%1000==0
+		puts "particles #{i}" if i%10000==0
 		# random starting point
 		pos = nil
-		while not pos or map[pos[1]][pos[0]]<0.0
+		while not pos or map[pos[1]][pos[0]]<0.0 #or map[pos[1]][pos[0]]>3000.0
 			pos = r.random_point(rs)
 		end
 		particle = Particle.new pos
 		while particle.move(w,h,map)
+			particle.update_water_map(water_map)
 			# if speed high remove
 		end
 		x,y = particle.pos
 		#alt = map[y][x]
 		deposit = particle.mass
+		if particle.prov_alt
+			max_deposit = particle.prov_alt-map[y][x]
+			deposit = [deposit,max_deposit].min
+		end
 		map[y][x]+=deposit
+		each_around(particle.pos) { |ax,ay| (map[ay][ax] += (deposit/2.0)) if [ax,ay]!=particle.prov_pos } 
 		#puts "deposit #{deposit} at #{x},#{y}"
 		# deposit at last position
 	end
+	water_map
 end
 
 def erosion_cycle(w,h,map,sediment_map,water_map)

@@ -21,8 +21,43 @@ def perform_erosion(w,h,map,seed)
 	mf.launch
 
 	#erosion(w,h,map,50)
-	particles_erosion(w,h,map,5000000)
+	water_map = particles_erosion(w,h,map,1000000)
+
+	n_land_with_water = 0
+	n_land_without_water = 0
+	each_in_map(w,h,water_map) do |x,y,v|
+		if map[y][x]>=0.0
+			if v>0
+				n_land_with_water+=1
+			else
+				n_land_without_water+=1
+			end
+		end
+	end
+	puts "Land with water: #{n_land_with_water}"
+	puts "Land without water: #{n_land_without_water}"
+
+	water_power_map = derive_map_from_map(water_map,w,h) do |x,y,v|
+		Math.log(v)
+	end
+
+	water_colors = BwColors.new
+	max_water = 0.0
+	each_in_map(w,h,water_power_map) { |x,y,v| max_water = v if v>max_water }
+	draw_water = Proc.new do |x,y|
+		if map[y][x]<0
+			Color.new 0,0,255
+		else
+			p = (water_power_map[y][x]/max_water)
+			p=0 if p<0
+			p=1 if p>1
+			color = water_colors.get(p*4000.0)
+		end
+	end
 	
+	mf = MapFrame.new("Erosion: watermap, seed #{seed}", w, h, draw_water)
+	mf.launch
+
 	mf = MapFrame.new("Erosion: 50 steps, seed #{seed}", w, h, draw_code)
 	mf.launch
 
@@ -37,7 +72,7 @@ def perform_erosion(w,h,map,seed)
 	# mf.launch
 end
 
-(1..1).each do |seed| 
+(6..6).each do |seed| 
 	w = 1200
 	h = 800
 	path = "examples/continental_base_#{w}x#{h}_#{seed}_with_noise.contbase"

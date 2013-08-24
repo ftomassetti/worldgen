@@ -23,8 +23,8 @@ end
 
 map = gen_map
 print_map($WIDTH,$HEIGHT,map,"Initial map")
-water_map,sediment_map =erosion($WIDTH,$HEIGHT,map,100)
+particles_erosion($WIDTH,$HEIGHT,map,100000)
 print_map($WIDTH,$HEIGHT,map,"Final map")
 
-print_map($WIDTH,$HEIGHT,water_map,"Water map")
-print_map($WIDTH,$HEIGHT,sediment_map,"Sediment map")
+#print_map($WIDTH,$HEIGHT,water_map,"Water map")
+#print_map($WIDTH,$HEIGHT,sediment_map,"Sediment map")

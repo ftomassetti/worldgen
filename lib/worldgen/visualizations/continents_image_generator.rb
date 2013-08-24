@@ -1,6 +1,6 @@
 require 'worldgen/visualizations/map_drawing'
 require 'worldgen/visualizations/images'
-require 'worldgen/plaques'
+require 'worldgen/plates'
 require 'worldgen/math'
 require 'worldgen/marshalling'
 require 'worldgen/visualizations/colors'
@@ -20,7 +20,7 @@ def generate_continents_image(width,height,map,path,desc)
 	end
 end
 
-(1..5).each do |seed|
+(6..8).each do |seed|
 	width = 300
 	height = 300
 	path = "examples/continental_base_#{seed}.contbase"
@@ -30,7 +30,7 @@ end
 	generate_continents_image(width,height,map,outpath,desc)
 end
 
-(1..5).each do |seed|
+(6..8).each do |seed|
 	width = 1200
 	height = 800
 	path = "examples/continental_base_#{width}x#{height}_#{seed}_with_noise.contbase"

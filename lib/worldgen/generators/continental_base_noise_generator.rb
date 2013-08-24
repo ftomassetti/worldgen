@@ -36,7 +36,7 @@ def perform_continental_base_noise_addition(cb_w,cb_h,continental_base,target_w,
 	mf.launch
 end
 
-(1..5).each do |seed| 
+(6..8).each do |seed| 
 	log "Calculating continental base noise with seed #{seed}"	
 	path = outpath = "examples/continental_base_#{seed}.contbase"
 	continental_base = load_marshal_file(path)

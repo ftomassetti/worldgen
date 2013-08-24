@@ -36,7 +36,7 @@ def build_fixed_map(w,h,value=0.0)
 	build_map(w,h) {|x,y| value }
 end
 
-def derive_map_from_map(orig,width,height,desc='deriving map from map',&block)
+def derive_map_from_map(orig,width,height,desc=nil,&block)
 	build_map(width,height,desc) do |x,y|
 		block.call(x,y,orig[y][x])
 	end
