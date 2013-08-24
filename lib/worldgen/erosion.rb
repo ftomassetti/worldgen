@@ -50,7 +50,7 @@ class Particle
 		@prov_pos = nil
 	end
 
-	def move(w,h,map)
+	def move(w,h,map,erodibility_map)
 		my_alt = map[@pos[1]][@pos[0]]
 		arounds = []
 		each_around(@pos) do |ax,ay|
@@ -70,7 +70,7 @@ class Particle
 			@speed = (@speed*4+instantaneous_speed*1)/5.0
 			speed_th = 0.5
 			if @speed > speed_th
-				erosion = (@speed-speed_th)*0.25
+				erosion = (@speed-speed_th)*0.3*(0.5+erodibility_map[dest[1]][dest[0]]/2.0)
 				map[dest[1]][dest[0]] -= erosion
 				each_around(dest) do |ax,ay| 
 					if [ax,ay]!=@pos and my_alt>map[ay][ax]
@@ -92,7 +92,7 @@ class Particle
 	end
 end
 
-def particles_erosion(w,h,map,n_particles)
+def particles_erosion(w,h,map,erodibility_map,n_particles)
 	r = Rectangle.new w,h
 	rs = Random.new 1
 	water_map = build_fixed_map(w,h)
@@ -104,7 +104,7 @@ def particles_erosion(w,h,map,n_particles)
 			pos = r.random_point(rs)
 		end
 		particle = Particle.new pos
-		while particle.move(w,h,map)
+		while particle.move(w,h,map,erodibility_map)
 			particle.update_water_map(water_map)
 			# if speed high remove
 		end

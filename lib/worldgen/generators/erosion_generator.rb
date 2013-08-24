@@ -8,6 +8,7 @@ require 'worldgen/erosion'
 include WorldGen
 
 def perform_erosion(w,h,map,seed)
+	log "Starting erosion"
 	w = 1200
 	h = 800
 	#map = rescale(map,1200,800,w,h)
@@ -20,8 +21,16 @@ def perform_erosion(w,h,map,seed)
 	mf = MapFrame.new("Erosion: initial, seed #{seed}", w, h, draw_code)
 	mf.launch
 
-	#erosion(w,h,map,50)
-	water_map = particles_erosion(w,h,map,1000000)
+	erodibility_ns = CombinedPerlin.new 2,seed,4,256,[1,2]
+	erodibility_map = build_map(w,h) do |x,y|
+		puts "building erodibility map #{y}" if y%100==0 and x==0
+		xp = 4.0*(x.to_f/w.to_f)
+		yp = 4.0*(y.to_f/h.to_f)
+		erodibility_ns.get xp,yp
+	end
+	log "Erodibility map created"
+
+	water_map = particles_erosion(w,h,map,erodibility_map,1000000)
 
 	n_land_with_water = 0
 	n_land_without_water = 0
@@ -54,22 +63,16 @@ def perform_erosion(w,h,map,seed)
 			color = water_colors.get(p*4000.0)
 		end
 	end
+
+	data = {:erodibility=>erodibility_map, :water_map =>water_map, :elevation => map }
+	outpath = "examples/world_after_erosion_#{w}x#{h}_#{seed}.world"
+	save_marshal_file(outpath,data)
 	
 	mf = MapFrame.new("Erosion: watermap, seed #{seed}", w, h, draw_water)
 	mf.launch
 
 	mf = MapFrame.new("Erosion: 50 steps, seed #{seed}", w, h, draw_code)
 	mf.launch
-
-	# particles_erosion(w,h,map,500000)
-	
-	# mf = MapFrame.new("Erosion: 100 steps, seed #{seed}", w, h, draw_code)
-	# mf.launch
-
-	# particles_erosion(w,h,map,1000000)
-	
-	# mf = MapFrame.new("Erosion: 200 steps, seed #{seed}", w, h, draw_code)
-	# mf.launch
 end
 
 (6..6).each do |seed| 
