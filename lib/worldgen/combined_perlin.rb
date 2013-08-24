@@ -1,3 +1,5 @@
+require 'perlin_noise'
+
 module WorldGen
 
 class CombinedPerlin

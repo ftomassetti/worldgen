@@ -40,9 +40,11 @@ class Colors
 	end
 
 	def calc(alt)
+		min_x = @limits.last[0]
+		max_x = @limits.first[0]
 		# ex. 3000
-		return Color.new(37,14,128) if alt<=-10000
-		return Color.new(196,235,236) if alt>=6000
+		return Color.new(@limits.last[1],@limits.last[2],@limits.last[3]) if alt<=min_x
+		return Color.new(@limits.first[1],@limits.first[2],@limits.first[3]) if alt>=max_x
 		li = -1
 		@limits.each_with_index do |arr,i|
 			a,r,g,b = arr
@@ -73,6 +75,28 @@ class BwColors < Colors
 		@limits = [
 			[4000,255,255,255],
 			[0,0,0,0]
+		]
+	end
+end
+
+class RadiantColors < Colors
+	def initialize
+		@calculated = {}
+		@limits = [
+			[1.5*Math::PI,255, 255, 0],
+			[1.0*Math::PI,  0,  0,255],
+			[0.5*Math::PI,  0,255,  0],
+			[0.0*Math::PI,255,  0,  0]
+		]
+	end
+end
+
+class TemperatureColors < Colors
+	def initialize
+		@calculated = {}
+		@limits = [
+			[1.0,255,  0,   0],
+			[0.0,  0,  0, 255]
 		]
 	end
 end
