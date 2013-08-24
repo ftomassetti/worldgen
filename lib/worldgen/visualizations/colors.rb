@@ -101,6 +101,16 @@ class TemperatureColors < Colors
 	end
 end
 
+class RainShadowColors < Colors
+	def initialize
+		@calculated = {}
+		@limits = [
+			[1.0,    0,  0,   0],
+			[0.0, 255, 255, 255]
+		]
+	end
+end
+
 class GraduatedColors < Colors
 
 	def initialize(n_colors)
