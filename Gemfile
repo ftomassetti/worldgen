@@ -1,1 +1,3 @@
-perlin_noise
+source 'https://rubygems.org'
+
+gem 'perlin_noise'

@@ -8,9 +8,9 @@ require 'worldgen/erosion'
 include WorldGen
 
 def perform_erosion(w,h,map,seed)
-	w = 200
-	h = 200
-	map = rescale(map,1200,800,w,h)
+	w = 1200
+	h = 800
+	#map = rescale(map,1200,800,w,h)
 	colors = Colors.new
 	draw_code = Proc.new do |x,y|
 		color = colors.get(map[y][x])
@@ -20,20 +20,21 @@ def perform_erosion(w,h,map,seed)
 	mf = MapFrame.new("Erosion: initial, seed #{seed}", w, h, draw_code)
 	mf.launch
 
-	erosion(w,h,map,50)
+	#erosion(w,h,map,50)
+	particles_erosion(w,h,map,5000000)
 	
 	mf = MapFrame.new("Erosion: 50 steps, seed #{seed}", w, h, draw_code)
 	mf.launch
 
-	erosion(w,h,map,50)
+	# particles_erosion(w,h,map,500000)
 	
-	mf = MapFrame.new("Erosion: 100 steps, seed #{seed}", w, h, draw_code)
-	mf.launch
+	# mf = MapFrame.new("Erosion: 100 steps, seed #{seed}", w, h, draw_code)
+	# mf.launch
 
-	erosion(w,h,map,100)
+	# particles_erosion(w,h,map,1000000)
 	
-	mf = MapFrame.new("Erosion: 200 steps, seed #{seed}", w, h, draw_code)
-	mf.launch
+	# mf = MapFrame.new("Erosion: 200 steps, seed #{seed}", w, h, draw_code)
+	# mf.launch
 end
 
 (1..1).each do |seed| 

@@ -12,7 +12,8 @@ def generate_continents_image(width,height,map,path,desc)
 		colors = Colors.new
 		save_image(width,height,path,desc) do |x,y|
 			alt = map[y][x]		
-			colors.get alt
+			color = colors.get alt
+			color = shadow_color(map,color,x,y)
 		end
 	rescue Exception => e
 		puts "Problem with continents #{desc}: #{e}"

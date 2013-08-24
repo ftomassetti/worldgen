@@ -36,6 +36,69 @@ $solubility = 0.00001
 $evaporation = 0.99
 $capacity = 0.02
 
+class Particle
+	attr_reader :mass
+	attr_reader :pos
+
+	def initialize(pos)
+		@pos = pos
+		@speed = 1.0
+		@mass  = 0.01
+	end
+
+	def move(w,h,map)
+		my_alt = map[@pos[1]][@pos[0]]
+		arounds = []
+		each_around(@pos) do |ax,ay|
+			if ax>=0 and ay>=0 and ax<w and ay<h
+				alt = map[ay][ax]
+				arounds << [ax,ay,alt]
+			end
+		end
+		arounds = arounds.select {|a| a[2]<my_alt}
+		dest_alt = nil
+		if arounds.count > 0
+			arounds = arounds.sort_by{ |a| a[2] }
+			dest = [arounds.first[0],arounds.first[1]]
+			dest_alt = arounds.first[2]
+			diff_alt = my_alt-arounds.first[2]
+			instantaneous_speed = Math.log(diff_alt,10)
+			@speed = (@speed*4+instantaneous_speed*1)/5.0
+			if @speed > 1.5
+				erosion = 10.0
+				map[dest[1]][dest[0]] -= erosion
+				#puts "removing #{erosion} at #{dest[1]},#{dest[0]}"
+				@mass += erosion
+			end
+			@pos = dest
+		end
+		dest_alt and dest_alt>=0.0 
+	end
+end
+
+def particles_erosion(w,h,map,n_particles)
+	r = Rectangle.new w,h
+	rs = Random.new 1
+	n_particles.times do |i|
+		puts "particles #{i}" if i%1000==0
+		# random starting point
+		pos = nil
+		while not pos or map[pos[1]][pos[0]]<0.0
+			pos = r.random_point(rs)
+		end
+		particle = Particle.new pos
+		while particle.move(w,h,map)
+			# if speed high remove
+		end
+		x,y = particle.pos
+		#alt = map[y][x]
+		deposit = particle.mass
+		map[y][x]+=deposit
+		#puts "deposit #{deposit} at #{x},#{y}"
+		# deposit at last position
+	end
+end
+
 def erosion_cycle(w,h,map,sediment_map,water_map)
 	difference_map = build_fixed_map(w,h)
 	water_map_diff = build_fixed_map(w,h) 
