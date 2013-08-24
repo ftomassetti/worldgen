@@ -92,15 +92,22 @@ class Particle
 	end
 end
 
-def particles_erosion(w,h,map,erodibility_map,n_particles)
+def rainshadowed(pos,rainshadow_map,rs)
+	x,y=pos
+	rainshadow = rainshadow_map[y][x]
+	rainshadow>0.0 and rs.rand<=rainshadow
+end
+
+def particles_erosion(w,h,map,erodibility_map,rainshadow_map,rs,n_particles)
+	rainshadow_map[700][1000]
+
 	r = Rectangle.new w,h
-	rs = Random.new 1
 	water_map = build_fixed_map(w,h)
 	n_particles.times do |i|
 		puts "particles #{i}" if i%10000==0
 		# random starting point
 		pos = nil
-		while not pos or map[pos[1]][pos[0]]<0.0 #or map[pos[1]][pos[0]]>3000.0
+		while not pos or map[pos[1]][pos[0]]<0.0 or rainshadowed(pos,rainshadow_map,rs)
 			pos = r.random_point(rs)
 		end
 		particle = Particle.new pos

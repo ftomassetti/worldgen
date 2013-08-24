@@ -7,7 +7,7 @@ require 'worldgen/erosion'
 
 include WorldGen
 
-def perform_erosion(w,h,map,seed)
+def perform_erosion(w,h,map,rainshadow_map,seed)
 	log "Starting erosion"
 	w = 1200
 	h = 800
@@ -21,16 +21,18 @@ def perform_erosion(w,h,map,seed)
 	mf = MapFrame.new("Erosion: initial, seed #{seed}", w, h, draw_code)
 	mf.launch
 
-	erodibility_ns = CombinedPerlin.new 2,seed,4,256,[1,2]
+	erodibility_ns = CombinedPerlin.new 2,seed*11,4,256,[1,2]
 	erodibility_map = build_map(w,h) do |x,y|
 		puts "building erodibility map #{y}" if y%100==0 and x==0
-		xp = 4.0*(x.to_f/w.to_f)
-		yp = 4.0*(y.to_f/h.to_f)
+		xp = 64.0*(x.to_f/w.to_f)
+		yp = 64.0*(y.to_f/h.to_f)
 		erodibility_ns.get xp,yp
+		1.0
 	end
 	log "Erodibility map created"
 
-	water_map = particles_erosion(w,h,map,erodibility_map,1000000)
+	rs = Random.new seed*7
+	water_map = particles_erosion(w,h,map,erodibility_map,rainshadow_map,rs,1000000)
 
 	n_land_with_water = 0
 	n_land_without_water = 0
@@ -80,7 +82,8 @@ end
 	h = 800
 	path = "examples/continental_base_#{w}x#{h}_#{seed}_with_noise.contbase"
 	map = load_marshal_file(path)
-	perform_erosion(w,h,map,seed) 
+	rainshadow_map = load_marshal_file("examples/rainshadowmap_#{w}x#{h}_#{seed}.rainshadow")
+	perform_erosion(w,h,map,rainshadow_map,seed) 
 end
 
 puts "done."
