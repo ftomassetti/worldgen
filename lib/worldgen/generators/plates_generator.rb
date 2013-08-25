@@ -2,6 +2,7 @@
 
 require 'worldgen/plates'
 require 'worldgen/math'
+require 'worldgen/marshalling'
 require 'worldgen/visualizations/map_drawing'
 require 'worldgen/visualizations/colors'
 
@@ -9,13 +10,46 @@ include WorldGen
 
 $SAVING = true
 $SHOW   = true
+$WIDTH  = 300
+$HEIGHT = 300
+$N_HOT_POINTS = 35
+$DISTURB_STRENGTH = 12
 
-def perfom_generation(width,height,n_hot_points,disturb_strength,seed)
+$USAGE = "plates_generator <seed> <output>"
+
+def show_usage
+	puts $USAGE
+	exit
+end
+
+def error(msg)
+	puts msg
+	exit
+end
+
+show_usage if ARGV.count<2 
+$SEED   = ARGV[0].to_i
+$OUTPUT = ARGV[1]
+
+ARGV[2..-1].each do |arg|
+	name,value = arg.split ':'
+	case name
+	when 'w'
+		$WIDTH = value.to_i
+	when 'h'
+		$HEIGHT = value.to_i
+	when 'hps'
+		$N_HOT_POINTS = value.to_i
+	else
+		error "Unknown param: #{name}"
+	end
+end
+
+def perform_generation(width,height,n_hot_points,disturb_strength,seed)
 	plates = generate_plaques(width,height,n_hot_points,disturb_strength,seed)
 
 	if $SAVING
-		outpath = "examples/plates_#{width}x#{height}_hp#{n_hot_points}_seed#{seed}.plaques"
-		File.open(outpath, 'wb') {|file| Marshal.dump(plates,file) } 
+		save_marshal_file($OUTPUT, plates)
 	end
 
 	if $SHOW

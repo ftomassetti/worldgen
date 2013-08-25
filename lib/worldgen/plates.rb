@@ -3,6 +3,7 @@ require 'perlin_noise'
 require 'worldgen/log'
 require 'worldgen/geometry'
 require 'worldgen/map'
+require 'worldgen/noises'
 
 module WorldGen
 
@@ -38,7 +39,7 @@ def generate_plaques(width,height,n_hot_points,disturb_strength=25,seed)
 	log "building distances map"
 	distances_map = calc_hotpoints_distances_map(width,height,hot_points)
 	log "disturbing distances map"
-	disturb_distances_map(width,height,hot_points,distances_map,disturb_strength)
+	disturb_distances_map(width,height,hot_points,distances_map,disturb_strength,general_random.rand(100000))
 end
 
 def gen_hot_points(w,h,n,random)
@@ -66,17 +67,21 @@ def calc_hotpoints_distances_map(w,h,hot_points)
 	end
 end
 
-def disturb_distances_map(w,h,hot_points,distances_map,disturb_strength)
+def disturb_distances_map(w,h,hot_points,distances_map,disturb_strength,seed)
 	noises = []
-	hot_points.count.times { noises << Perlin::Noise.new(2, :interval => [w,h].max) }
+	r = Random.new seed
+	#hot_points.count.times { noises << Perlin::Noise.new(2, :interval => [w,h].max) }
+	hot_points.count.times { noises << simplex_noise(r.rand(100000)) }
 	derive_map_from_map(distances_map,w,h,'inserting noise in distances map') do |x,y,distances|
 		max = w*h
 		sel_i = 0
 		hot_points.each_with_index do |hp,i|
 			noise_source = noises[i]
-			px = 16.0*(x.to_f/w.to_f)
-			py = 16.0*(y.to_f/h.to_f)
-			tot = distances[i]+disturb_strength.to_f*noise_source[py,px]
+			px = 8.0*(x.to_f/w.to_f)
+			py = 8.0*(y.to_f/h.to_f)
+			#puts "NOISE: #{noise_source.noise(py,px)}"
+			#tot = distances[i]+disturb_strength.to_f*noise_source[py,px]
+			tot = distances[i]+disturb_strength.to_f*noise_source.noise(py,px)
 			if tot<max
 				sel_i = i
 				max = tot
