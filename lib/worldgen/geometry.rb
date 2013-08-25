@@ -1,5 +1,22 @@
 module WorldGen
 
+	def surroundings(p,radius)
+        s = []
+        px,py = p
+        (-radius..radius).each do |dy|
+            (-radius..radius).each do |dx|
+                d = Math.sqrt(dx**2+dy**2)
+                if d<=radius
+                    x = px+dx
+                    y = py+dy
+                    np = [x,y]
+                    s << np unless p.eql?np# or s.include?(np)
+                end     
+            end     
+        end
+        s
+    end
+
 	def each_around_limited(p,&block)
 		x,y = p
 		dirs = [ [0,-1],[1,0],[0,1],[-1,0] ]

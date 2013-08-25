@@ -111,6 +111,50 @@ class RainShadowColors < Colors
 	end
 end
 
+class BiomeColors
+	def initialize
+		@map = {
+			:ocean              => Color.new(0,0,255),
+			:glacier			=> Color.new(204,224,224),
+			:tropical_jungle	=> Color.new(120,209,10),
+			:jungle 			=> Color.new(110,158,52),
+			:forest 			=> Color.new(67,92,36),
+			:coniferous_forest  => Color.new(107,106,16),
+			:taiga				=> Color.new(199,235,211),
+			:tundra				=> Color.new(161,191,170),
+			:savanna			=> Color.new(212,212,59),
+			:iceland			=> Color.new(255,255,255),
+			:steppa				=> Color.new(171,212,59),
+			:desert 			=> Color.new(247,247,96),
+			:rocky_desert		=> Color.new(184,184,140),
+			:grass				=> Color.new(40,181,56),
+			:alpine				=> Color.new(15,135,29),
+			:rocky_mountain		=> Color.new(77,75,67),
+			:swamp				=> Color.new(156,139,12)
+		}
+	end
+
+	def get(type)
+		@map[type]
+	end
+
+end
+
+# class ElevationTypeColors
+# 	def get(type)
+# 		when type
+# 			case :ocean
+# 			case :flatland	
+# 			case :hill
+# 			case :low_mountain
+# 			case :medium_mountain
+# 			case :high_mountain
+# 			else 
+# 				raise "Unknown #{type}"
+# 		end
+# 	end
+# end
+
 class GraduatedColors < Colors
 
 	def initialize(n_colors)
