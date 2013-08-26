@@ -2,6 +2,14 @@ require 'worldgen/log'
 
 module WorldGen
 
+def map_width(map)
+	map[0].count
+end
+
+def map_height(map)
+	map.count
+end
+
 def print_map(w,h,map,title)
 	puts "= map #{title} ="
 	h.times do |y|

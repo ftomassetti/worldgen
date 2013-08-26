@@ -5,6 +5,7 @@ require 'worldgen/math'
 require 'worldgen/marshalling'
 require 'worldgen/visualizations/map_drawing'
 require 'worldgen/visualizations/colors'
+require 'worldgen/console'
 
 include WorldGen
 
@@ -16,16 +17,6 @@ $N_HOT_POINTS = 35
 $DISTURB_STRENGTH = 12
 
 $USAGE = "plates_generator <seed> <output>"
-
-def show_usage
-	puts $USAGE
-	exit
-end
-
-def error(msg)
-	puts msg
-	exit
-end
 
 show_usage if ARGV.count<2 
 $SEED   = ARGV[0].to_i

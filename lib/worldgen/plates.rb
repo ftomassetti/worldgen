@@ -91,11 +91,11 @@ def disturb_distances_map(w,h,hot_points,distances_map,disturb_strength,seed)
 	end
 end
 
-def polish_plaques(w,h,plaques)
-	log "Breaking plaques in blocks"
-	break_plaques_in_blocks(w,h,plaques)
+def polish_plates(w,h,plates)
+	log "Breaking plates in blocks"
+	break_plaques_in_blocks(w,h,plates)
 	log "Inglobing surrounded block"
-	inglobe_surrounded_blocks(w,h,plaques)
+	inglobe_surrounded_blocks(w,h,plates)
 end
 
 def points_of_the_plaque(w,h,plaques,plaque_index)
@@ -106,14 +106,22 @@ def points_of_the_plaque(w,h,plaques,plaque_index)
 	points
 end
 
-def expand_block(w,h,map,block,p,val)
-	return if block.include? p
-	block << p
+def expand_around_point(w,h,map,block,p,val)
 	r = Rectangle.new w,h
 	each_around_limited(p) do |x,y|
-		if r.include? [x,y]
-			expand_block(w,h,map,block,[x,y],val) if map[y][x] == val
-		end
+		p = [x,y]
+		#puts "Considering #{x},#{y} arounf #{p[0]},#{p[1]} #{r.include?([x,y])} #{map[y][x] == val}"
+		block << p if r.include?([x,y]) and (map[y][x] == val) and (not block.include?([x,y]))
+	end
+end
+
+def expand_block(w,h,map,block,p,val)
+	block << p
+	i = 0
+	while i<block.count
+		puts "exp #{i}" if i%100==0
+		expand_around_point(w,h,map,block,block[i],val)
+		i+=1
 	end
 end
 

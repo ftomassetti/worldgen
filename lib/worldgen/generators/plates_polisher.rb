@@ -5,36 +5,48 @@ require 'worldgen/math'
 require 'worldgen/marshalling'
 require 'worldgen/visualizations/map_drawing'
 require 'worldgen/visualizations/colors'
+require 'worldgen/console'
 
 include WorldGen
 
-def perfom_polishing(width,height,plaques,name,seed)
-	polish_plaques(width,height,plaques)
+$SAVING = true
+$SHOW   = true
 
-	n_plaques = number_of_plaques(width,height,plaques)
-	colors = GraduatedColors.new n_plaques
-	draw_code = Proc.new do |x,y|
-		plaque_index = plaques[y][x]		
-		colors.get plaque_index
+$USAGE = "plates_polisher <input> <output>"
+
+show_usage if ARGV.count<2 
+$INPUT  = ARGV[0]
+$OUTPUT = ARGV[1]
+
+ARGV[2..-1].each do |arg|
+	name,value = arg.split ':'
+	error "Unknown param: #{name}"
+end
+
+def perfom_polishing(width,height,plates)
+	polish_plates(width,height,plates)
+
+	n_plaques = number_of_plaques(width,height,plates)
+	
+	if $SAVING
+		save_marshal_file($OUTPUT,plates)
 	end
 
-	outpath = "examples/plates_#{name}_polished.plaques"
-	save_marshal_file(outpath,plaques)
-
-	mf = MapFrame.new("Polished plates seed #{seed}", width, height, draw_code)
-	mf.launch
+	if $SHOW
+		colors = GraduatedColors.new n_plaques
+		draw_code = Proc.new do |x,y|
+			plate_index = plates[y][x]		
+			colors.get plate_index
+		end
+		mf = MapFrame.new("Polished plates", width, height, draw_code)
+		mf.launch
+	end
 end
 
-(6..8).each do |seed|
-	log "Polishing plaques, seed #{seed}"
-	width = 300
-	height = 300
-	n_hot_points = 25 
-	path = "examples/plates_#{width}x#{height}_hp#{n_hot_points}_seed#{seed}.plaques"
-	plaques = load_marshal_file(path)
-	log "Unpolished plates loaded"
-
-	perfom_polishing(width,height,plaques,"#{width}x#{height}_hp#{n_hot_points}_seed#{seed}",seed)
-end
+plates = load_marshal_file($INPUT)
+log "Unpolished plates loaded"
+width = map_width(plates)
+height = map_height(plates)
+perfom_polishing(width,height,plates)
 
 puts "done."

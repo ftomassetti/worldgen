@@ -7,26 +7,41 @@ require 'worldgen/wind'
 
 include WorldGen
 
+$SAVING = true
+$SHOW   = true
+
+$USAGE = "windmap_generator <elev> <output> <seed>"
+
+show_usage if ARGV.count<3
+$INPUT_ELEV  = ARGV[0]
+$OUTPUT = ARGV[1]
+$SEED   = ARGV[2].to_i
+
+ARGV[3..-1].each do |arg|
+	name,value = arg.split ':'
+	error "Unknown param: #{name}"
+end
+
 def generate(w,h,elev_map,seed)
 	wind_map = gen_wind_map(w,h,elev_map,seed)
-	colors = RadiantColors.new
-	draw_wind = Proc.new do |x,y|
-		colors.get wind_map[y][x]
-	end
 
-	outpath = "examples/windmap_#{w}x#{h}_#{seed}.wind"
-	save_marshal_file(outpath,wind_map)
+	save_marshal_file($OUTPUT,wind_map) if $SAVING
 	
-	mf = MapFrame.new("Windmap, seed #{seed}", w, h, draw_wind)
-	mf.launch
+	if $SHOW
+		colors = RadiantColors.new
+		draw_wind = Proc.new do |x,y|
+			colors.get wind_map[y][x]
+		end
+		mf = MapFrame.new("Windmap, seed #{seed}", w, h, draw_wind)
+		mf.launch
+	end
 end
 
-(6..6).each do |seed| 
-	w = 1200
-	h = 800
-	path = "examples/continental_base_#{w}x#{h}_#{seed}_with_noise.contbase"
-	map = load_marshal_file(path)
-	generate(w,h,map,seed) 
-end
+
+map = load_marshal_file($INPUT_ELEV)
+w = map_width(map)
+h = map_height(map)
+
+generate(w,h,map,$SEED) 
 
 puts "done."

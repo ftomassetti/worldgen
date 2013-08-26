@@ -1,20 +1,21 @@
 require 'worldgen/plates'
 require 'worldgen/map'
 require 'worldgen/combined_perlin'
+require 'worldgen/noises'
 
 module WorldGen
 
 def add_noise(w,h,map,seed)
-	cp = CombinedPerlin.new 3,seed,4,256,[1,2,3]
-	derive_map_from_map(map,w,h) do |x,y,orig_val|
+	cp = CombinedSimplex.new 3,seed,4,256
+	derive_map_from_map(map,w,h,'adding noise') do |x,y,orig_val|
 		xp = 4.0*(x.to_f/w.to_f)
 		yp = 4.0*(y.to_f/h.to_f)
-		new_val = ((cp.get xp,yp)-0.5)*1000 
+		new_val = (cp.get xp,yp)*1000+300
 		orig_val+new_val
 	end
 end
 
-def calculate_continental_base(w,h,plaques,seed)
+def calculate_continental_base(w,h,plaques,seed,seaness)
 	process_random = Random.new seed
 	log "Calculating border plaques"
 	border_plaques = plaques_at_border_of_the_map(w,h,plaques)
@@ -22,10 +23,15 @@ def calculate_continental_base(w,h,plaques,seed)
 	n_plaques = number_of_plaques(w,h,plaques)
 
 	platform_rand = Random.new(process_random.rand)	
-	border_rand   = Random.new(process_random.rand)	
+	border_rand   = Random.new(process_random.rand)
+	border_dists_rand = Random.new(process_random.rand)
 
 	platform_elevations = Hash.new do |hash, plaque_i|
-		hash[plaque_i] = height_platform(border_plaques,platform_rand,plaque_i)
+		hash[plaque_i] = height_platform(border_plaques,platform_rand,plaque_i,seaness)
+	end
+
+	border_dists = Hash.new do |hash, plaque_i|
+		hash[plaque_i] = border_dists_rand.rand(15)+border_dists_rand.rand(15)
 	end
 
 	plates_sizes = Hash.new do |hash,plate_i|
@@ -36,11 +42,12 @@ def calculate_continental_base(w,h,plaques,seed)
 		hash[key] = elevation_of_borders(plates_sizes,key[0],key[1],border_rand,platform_elevations)
 	end
 
-	plaques_borders_map(w,h,plaques,platform_elevations,border_elevations,process_random.rand)
+	plaques_borders_map(w,h,plaques,platform_elevations,border_elevations,border_dists,process_random.rand)
 end
 
-def height_platform(border_plaques,random,plaque_i)
-	marine = border_plaques.include?(plaque_i) or random.rand<0.3
+def height_platform(border_plaques,random,plaque_i,seaness)
+	marine = ((border_plaques.include?(plaque_i)) || (rs=random.rand;puts "Rs: #{rs} #{seaness}";rs<seaness))
+	#puts "\tmarine:#{marine} border:#{(border_plaques.include?(plaque_i))}"
 	if marine
 		elev = -10000+random.rand(500)+random.rand(500)
 	else
@@ -85,18 +92,20 @@ def elevation_of_borders(plates_sizes,a,b,random,platform_elevations)
 	v
 end
 
-MAX_DIST = 20
+#MAX_DIST = 20
 
-def plaques_borders_map(w,h,plaques,platform_elevations,border_elevations,seed)	
+def plaques_borders_map(w,h,plaques,platform_elevations,border_elevations,border_dists,seed)	
 
-	perlin = Perlin::Noise.new(2, :seed => seed )
+	#noise_source = Perlin::Noise.new(2, :seed => seed )
+	noise_source = simplex_noise((seed*2356).to_i)
 
 	derive_map_from_map(plaques,w,h,"calculating plaques borders") do |x,y,plaque_i|
 		v=platform_elevations[plaque_i]
 		other = nil
-		(1..MAX_DIST).each do |d|
+		max_dist = border_dists[plaque_i] # it is on per plaque base... let's see if it has sense
+		(1..max_dist).each do |d|
 			unless other 
-				attenuation = 1+MAX_DIST-d
+				attenuation = 1+max_dist-d
 				other = plaques[y][x-d] if x>d and plaques[y][x]!=plaques[y][x-d]
 				other = plaques[y][x+d] if x+d<w and plaques[y][x]!=plaques[y][x+d]
 				other = plaques[y-d][x] if y>d and plaques[y][x]!=plaques[y-d][x]
@@ -108,7 +117,7 @@ def plaques_borders_map(w,h,plaques,platform_elevations,border_elevations,seed)
 					# add some noise
 					px = 16.0*(x.to_f/w.to_f)
 					py = 16.0*(y.to_f/h.to_f)
-					noise = perlin[px,py]
+					noise = (noise_source.noise(px,py)+1.0)/2.0
 					delta *= (0.5+noise/2.0)
 					#puts "Delta #{delta}, d=#{d}, border=#{border_elevations[[plaque_i,other]]}"
 
