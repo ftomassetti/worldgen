@@ -71,13 +71,10 @@ def perform_erosion(w,h,map,rainshadow_map,seed)
 	end
 end
 
-(6..6).each do |seed| 
-	w = 1200
-	h = 800
-	path = "examples/continental_base_#{w}x#{h}_#{seed}_with_noise.contbase"
-	map = load_marshal_file(path)
-	rainshadow_map = load_marshal_file("examples/rainshadowmap_#{w}x#{h}_#{seed}.rainshadow")
-	perform_erosion(w,h,map,rainshadow_map,seed) 
-end
+elev_map = load_marshal_file($INPUT_ELEV)
+rainshadow_map = load_marshal_file($INPUT_RAINSH)
+w = map_width(elev_map)
+h = map_height(elev_map)
+perform_erosion(w,h,elev_map,rainshadow_map,$SEED) 
 
 puts "done."

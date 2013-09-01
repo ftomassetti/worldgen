@@ -1,6 +1,22 @@
 require 'worldgen/log'
+require 'bindata'
 
 module WorldGen
+
+class Map < BinData::Record
+	uint16le :width
+	uint16le :height
+	array :numbers, type: :float_le
+
+	def get(x,y=nil)
+		if y==nil
+			x,y = x
+		end
+		puts "X=#{x}, Y=#{y} W=#{@width} H=#{@height}"
+		raise "unvalid point" if x<0 or y<0 or x>=@width or y>=@height		
+		@numbers[y*@width+x]
+	end
+end
 
 def map_width(map)
 	map[0].count
