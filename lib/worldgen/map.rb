@@ -1,20 +1,34 @@
 require 'worldgen/log'
-require 'bindata'
+
+java_import java.nio.channels.FileChannel
+java_import java.io.RandomAccessFile
 
 module WorldGen
 
-class Map < BinData::Record
-	uint16le :width
-	uint16le :height
-	array :numbers, type: :float_le
+class Map
+	attr_accessor :width
+	attr_accessor :height
+	attr_accessor :mbb
+
+	def self.nio_load(path)
+		rac = RandomAccessFile.new path, 'rw'
+		fc = rac.channel
+		rw_mode = FileChannel::MapMode::READ_WRITE
+		mbb_metadata = fc.map rw_mode, 0, 4
+		mbb_values = fc.map rw_mode, 4, fc.size-4
+		map = Map.new
+		map.width = mbb_metadata.getShort 0
+		map.height = mbb_metadata.getShort 2
+		map.mbb = mbb_values 
+		map
+	end
 
 	def get(x,y=nil)
 		if y==nil
 			x,y = x
 		end
-		puts "X=#{x}, Y=#{y} W=#{@width} H=#{@height}"
 		raise "unvalid point" if x<0 or y<0 or x>=@width or y>=@height		
-		@numbers[y*@width+x]
+		@mbb.getFloat((y*@width)<<2+x<<2)
 	end
 end
 
