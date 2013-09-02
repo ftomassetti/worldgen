@@ -61,6 +61,19 @@ module WorldGen
 		Math.sqrt((dx**pow)+(dy**pow))
 	end
 
+	class Position
+		attr_accessor :x
+		attr_accessor :y
+
+		def self.load(hash)
+			inst = Position.new
+			inst.x = hash['x']
+			inst.y = hash['y']
+			inst
+		end
+
+	end
+
 	class Rectangle
 		def initialize(r,t,l=0,b=0)
 			@right = r

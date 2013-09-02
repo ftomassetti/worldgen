@@ -10,7 +10,7 @@ class Map
 	attr_accessor :height
 	attr_accessor :mbb
 
-	def self.nio_load(path)
+	def self.load(path)
 		rac = RandomAccessFile.new path, 'rw'
 		fc = rac.channel
 		rw_mode = FileChannel::MapMode::READ_WRITE
@@ -23,12 +23,20 @@ class Map
 		map
 	end
 
+	def close
+		@mbb.close
+	end
+
+	def save
+		@mbb.force(true)
+	end
+
 	def get(x,y=nil)
 		if y==nil
 			x,y = x
 		end
 		raise "unvalid point" if x<0 or y<0 or x>=@width or y>=@height		
-		@mbb.getFloat((y*@width)<<2+x<<2)
+		@mbb.getFloat(((y*@width)<<2)+(x<<2))
 	end
 end
 
