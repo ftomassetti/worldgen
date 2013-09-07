@@ -71,10 +71,10 @@ public class HelloTerrain extends SimpleApplication implements ActionListener {
   private float initialWaterHeight = 0.0f; // choose a value for your scene
 
   private static String[] TERRAIN_TEXTURE_NAMES = new String[]{
-      "Tex1", "Tex2", "Tex3","Tex4"
+      "Tex1", "Tex2", "Tex3","Tex4", "Tex5"
   };
   private static String[] TERRAIN_TEXTURE_SCALE_NAMES = new String[]{
-      "Tex1Scale", "Tex2Scale", "Tex3Scale","Tex4Scale"
+      "Tex1Scale", "Tex2Scale", "Tex3Scale","Tex4Scale","Tex5Scale"
   };
   private static String[] ALPHA_TEXTURE_NAMES = new String[]{
     "Alpha","Alpha_2"
@@ -180,7 +180,7 @@ public class HelloTerrain extends SimpleApplication implements ActionListener {
             counters[1]++;
           } else {
             val = 100.0f+((elev*155.0f)/8000.0f);
-            if (elev<100){
+            if (elev<200){
               r2 = 255;
               g = 0;
               b = 0;
@@ -190,11 +190,13 @@ public class HelloTerrain extends SimpleApplication implements ActionListener {
               g = 0;
               b = 0;
               counters[2]++;              
-            } else {
+            } else if (elev<900){
               r = 0;
               g = 255;
               b = 0;    
               counters[3]++;          
+            } else {
+              g2 = 255;
             }
           }
           int ix = map_width - (x+1);
@@ -275,6 +277,7 @@ assetManager.registerLocator("/Users/federico/repos/worldgen/jmedemo/HeightMapNa
     /** 1.4) Add ROAD texture into the blue layer (Tex3) */
     Texture water = assetManager.loadTexture("Textures/water.png");
     Texture beach = assetManager.loadTexture("Textures/beach.png");
+    Texture glacier = assetManager.loadTexture("Textures/Glacier.jpg");
 
     Texture rock = assetManager.loadTexture(
             "Textures/Terrain/splat/road.jpg");
@@ -285,6 +288,10 @@ assetManager.registerLocator("/Users/federico/repos/worldgen/jmedemo/HeightMapNa
     beach.setWrap(WrapMode.Repeat);
     mat_terrain.setTexture(TERRAIN_TEXTURE_NAMES[3], beach);
     mat_terrain.setFloat(TERRAIN_TEXTURE_SCALE_NAMES[3], 128f);
+
+    glacier.setWrap(WrapMode.Repeat);
+    mat_terrain.setTexture(TERRAIN_TEXTURE_NAMES[4], glacier);
+    mat_terrain.setFloat(TERRAIN_TEXTURE_SCALE_NAMES[4], 512f);
  
     /** 3. We have prepared material and heightmap. 
      * Now we create the actual terrain:

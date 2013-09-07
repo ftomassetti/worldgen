@@ -4,10 +4,12 @@ uniform sampler2D m_Tex1;
 uniform sampler2D m_Tex2;
 uniform sampler2D m_Tex3;
 uniform sampler2D m_Tex4;
+uniform sampler2D m_Tex5;
 uniform float m_Tex1Scale;
 uniform float m_Tex2Scale;
 uniform float m_Tex3Scale;
 uniform float m_Tex4Scale;
+uniform float m_Tex5Scale;
 
 varying vec2 texCoord;
 
@@ -23,6 +25,7 @@ void main(void)
     vec4 tex2;
     vec4 tex3;
     vec4 tex4;
+    vec4 tex5;
 
     // get the alpha value at this 2D texture coord
     vec4 alpha   = texture2D( m_Alpha, texCoord.xy );
@@ -61,6 +64,7 @@ void main(void)
 	tex2    = texture2D( m_Tex2, texCoord.xy * m_Tex2Scale ); // Tile
 	tex3    = texture2D( m_Tex3, texCoord.xy * m_Tex3Scale ); // Tile
     tex4    = texture2D( m_Tex4, texCoord.xy * m_Tex4Scale ); // Tile
+    tex5    = texture2D( m_Tex5, texCoord.xy * m_Tex5Scale ); // Tile
 	
 #endif
 
@@ -68,5 +72,6 @@ void main(void)
 	tex2 = mix( tex1, tex2, alpha.g ); // Green channel
 	outColor = mix( tex2, tex3, alpha.b ); // Blue channel
     outColor = mix( outColor, tex4, alpha2.r); 
+    outColor = mix( outColor, tex5, alpha2.g);
 	gl_FragColor = outColor;
 }
