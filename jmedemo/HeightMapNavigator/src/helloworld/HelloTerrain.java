@@ -50,7 +50,8 @@ import com.jme3.texture.Texture.WrapMode;
 import java.util.ArrayList;
 import java.util.List;
 import jme3tools.converters.ImageToAwt;
-
+import com.jme3.post.FilterPostProcessor;
+import com.jme3.water.WaterFilter;
  
 /** Sample 10 - How to create fast-rendering terrains from heightmaps,
 and how to use texture splatting to make the terrain look good.  */
@@ -64,6 +65,10 @@ public class HelloTerrain extends SimpleApplication implements ActionListener {
   private Vector3f walkDirection = new Vector3f();
   private boolean left = false, right = false, up = false, down = false;
   Material mat_terrain;
+  private FilterPostProcessor fpp;
+  private WaterFilter water;
+  //private Vector3f lightDir = new Vector3f(-4.9f, -1.3f, 5.9f); // same as light source
+  private float initialWaterHeight = 0.0f; // choose a value for your scene
  
   public static void main(String[] args) {
     HelloTerrain app = new HelloTerrain();
@@ -138,7 +143,11 @@ public class HelloTerrain extends SimpleApplication implements ActionListener {
           int r=0,g=0,b=0,a=255;
           int r2=0,g2=0,b2=0,a2=0;
           if (elev<=0) {
-            val=0.0f;
+            if (elev<=-5000){
+              val = 0.0f;
+            } else {
+              val = (elev+5000.0f)/50.0f;
+            }
             r = 0;
             g = 0;
             b = 255;
@@ -147,7 +156,7 @@ public class HelloTerrain extends SimpleApplication implements ActionListener {
             val=255.0f;
             counters[1]++;
           } else {
-            val = (elev*255.0f)/8000.0f;
+            val = 100.0f+((elev*155.0f)/8000.0f);
             if (elev<500){
               r = 255;
               g = 0;
@@ -159,9 +168,6 @@ public class HelloTerrain extends SimpleApplication implements ActionListener {
               b = 0;    
               counters[3]++;          
             }
-          }
-          if (b>0 && val>0){
-            System.out.println("Strange... "+elev);
           }
           int ix = map_width - (x+1);
           myHeightMap[ix*map_width+y]=val;
@@ -269,6 +275,8 @@ public class HelloTerrain extends SimpleApplication implements ActionListener {
     terrain.setShadowMode(ShadowMode.Receive);
     rootNode.attachChild(terrain);
 
+    waterStuff();
+
     /*rootNode.attachChild(SkyFactory.createSky(
             assetManager, "Textures/Sky/Bright/BrightSky.dds", false));*/
  
@@ -297,6 +305,14 @@ public class HelloTerrain extends SimpleApplication implements ActionListener {
     // to make them appear in the game world.
     bulletAppState.getPhysicsSpace().add(terrain);
     bulletAppState.getPhysicsSpace().add(player);
+  }
+
+  private void waterStuff(){
+    fpp = new FilterPostProcessor(assetManager);
+  water = new WaterFilter(rootNode, lightDir);
+  water.setWaterHeight(initialWaterHeight);
+  fpp.addFilter(water);
+  viewPort.addProcessor(fpp);
   }
 
   /**
