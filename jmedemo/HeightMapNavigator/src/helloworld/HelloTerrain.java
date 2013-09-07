@@ -79,8 +79,20 @@ public class HelloTerrain extends SimpleApplication implements ActionListener {
   private static String[] ALPHA_TEXTURE_NAMES = new String[]{
     "Alpha"
   };
-  private static String TERRAIN_MATERIAL_NAME = "Common/MatDefs/Terrain/Terrain.j3md";
- 
+  //private static String TERRAIN_MATERIAL_NAME = "Common/MatDefs/Terrain/Terrain.j3md";
+  private static String TERRAIN_MATERIAL_NAME = "MatDefs/MyTerrain.j3md";
+
+  /*private static String[] TERRAIN_TEXTURE_NAMES = new String[]{
+      "DiffuseMap", "DiffuseMap_1", "DiffuseMap_2"
+  };
+  private static String[] TERRAIN_TEXTURE_SCALE_NAMES = new String[]{
+      "DiffuseMap_0_scale", "DiffuseMap_1_scale", "DiffuseMap_2_scale"
+  };
+  private static String[] ALPHA_TEXTURE_NAMES = new String[]{
+    "AlphaMap", "AlphaMap_1"
+  };
+  private static String TERRAIN_MATERIAL_NAME = "Common/MatDefs/Terrain/TerrainLighting.j3md";  
+ */
   public static void main(String[] args) {
     HelloTerrain app = new HelloTerrain();
     app.start();
@@ -216,6 +228,9 @@ public class HelloTerrain extends SimpleApplication implements ActionListener {
     Image textureImage = new Image(Image.Format.RGBA8,map_width,map_height,textureData);
     Image textureImage_2 = new Image(Image.Format.RGBA8,map_width,map_height,textureData_2);
  
+assetManager.registerLocator("/Users/federico/repos/worldgen/jmedemo/HeightMapNavigator/assets/", FileLocator.class);
+    
+
     /** 1. Create terrain material and load four textures into it. */
     mat_terrain = new Material(assetManager, TERRAIN_MATERIAL_NAME);
 
@@ -230,14 +245,13 @@ public class HelloTerrain extends SimpleApplication implements ActionListener {
 
     Texture alpha_texture2 = new Texture2D();
     alpha_texture2.setImage(textureImage_2);
-    //mat_terrain.setTexture("Alpha", alpha_texture);
+    //mat_terrain.setTexture(ALPHA_TEXTURE_NAMES[1], alpha_texture2);
 
     //System.out.println("Image at 1000,1000: "+textureImage)
 
     //mat_terrain.setTexture("Alpha", assetManager.loadTexture("Textures/Terrain/splat/alphamap.png"));
  
 
-    assetManager.registerLocator("/Users/federico/repos/worldgen/jmedemo/HeightMapNavigator/assets/", FileLocator.class);
     //mat_terrain.setTexture("Alpha", assetManager.loadTexture("Textures/alphamap.png"));
     /** 1.2) Add GRASS texture into the red layer (Tex1). */
     Texture grass = assetManager.loadTexture(
@@ -262,17 +276,6 @@ public class HelloTerrain extends SimpleApplication implements ActionListener {
     rock.setWrap(WrapMode.Repeat);
     mat_terrain.setTexture(TERRAIN_TEXTURE_NAMES[2], water);
     mat_terrain.setFloat(TERRAIN_TEXTURE_SCALE_NAMES[2], 128f);
-    //mat_terrain.setTexture("Tex4", beach);
-    //mat_terrain.setFloat("Tex4Scale", 128f);
- 
-    /** 2. Create the height map */
-    /*AbstractHeightMap heightmap = null;
-    Texture heightMapImage = assetManager.loadTexture(
-            "Textures/Terrain/splat/mountains512.png");
-    heightmap = new ImageBasedHeightMap(heightMapImage.getImage());
-    heightmap.load();*/
-
-   //createSky();
  
     /** 3. We have prepared material and heightmap. 
      * Now we create the actual terrain:
@@ -284,6 +287,8 @@ public class HelloTerrain extends SimpleApplication implements ActionListener {
      */
     int patchSize = 65;
     terrain = new TerrainQuad("my terrain", patchSize, map_width, myHeightMap);
+        
+
 
     
  
@@ -296,9 +301,6 @@ public class HelloTerrain extends SimpleApplication implements ActionListener {
 
     waterStuff();
 
-    /*rootNode.attachChild(SkyFactory.createSky(
-            assetManager, "Textures/Sky/Bright/BrightSky.dds", false));*/
- 
     /** 5. The LOD (level of detail) depends on were the camera is: */
     TerrainLodControl control = new TerrainLodControl(terrain, getCamera());
     control.setLodCalculator( new DistanceLodCalculator(65, 1000007f) );
