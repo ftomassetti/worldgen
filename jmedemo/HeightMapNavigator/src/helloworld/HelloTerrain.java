@@ -23,6 +23,8 @@ import com.jme3.asset.plugins.FileLocator;
 import com.jme3.util.SkyFactory;
 import com.jme3.light.DirectionalLight;
 import com.jme3.math.Vector3f;
+import com.jme3.scene.Spatial;
+
  
 /** Sample 10 - How to create fast-rendering terrains from heightmaps,
 and how to use texture splatting to make the terrain look good.  */
@@ -35,6 +37,18 @@ public class HelloTerrain extends SimpleApplication {
     HelloTerrain app = new HelloTerrain();
     app.start();
   }
+
+    private void createSky() {
+        Texture west = assetManager.loadTexture("Textures/Sky/Lagoon/lagoon_west.jpg");
+        Texture east = assetManager.loadTexture("Textures/Sky/Lagoon/lagoon_east.jpg");
+        Texture north = assetManager.loadTexture("Textures/Sky/Lagoon/lagoon_north.jpg");
+        Texture south = assetManager.loadTexture("Textures/Sky/Lagoon/lagoon_south.jpg");
+        Texture up = assetManager.loadTexture("Textures/Sky/Lagoon/lagoon_up.jpg");
+        Texture down = assetManager.loadTexture("Textures/Sky/Lagoon/lagoon_down.jpg");
+
+        Spatial sky = SkyFactory.createSky(assetManager, west, east, north, south, up, down);
+        rootNode.attachChild(sky);
+    }
  
   @Override
   public void simpleInitApp() {
@@ -163,7 +177,7 @@ int[] counters = new int[]{0,0,0,0};
     heightmap = new ImageBasedHeightMap(heightMapImage.getImage());
     heightmap.load();*/
 
-   
+   createSky();
  
     /** 3. We have prepared material and heightmap. 
      * Now we create the actual terrain:
@@ -189,6 +203,7 @@ int[] counters = new int[]{0,0,0,0};
  
     /** 5. The LOD (level of detail) depends on were the camera is: */
     TerrainLodControl control = new TerrainLodControl(terrain, getCamera());
+    //control.setLodCalculator( new DistanceLodCalculator(65, 28.7f) );
     terrain.addControl(control);
   }
 }
