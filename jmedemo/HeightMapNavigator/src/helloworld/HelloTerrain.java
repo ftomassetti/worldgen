@@ -266,13 +266,16 @@ assetManager.registerLocator("/Users/federico/repos/worldgen/jmedemo/HeightMapNa
     grass.setWrap(WrapMode.Repeat);
     mat_terrain.setTexture(TERRAIN_TEXTURE_NAMES[0], grass);
     mat_terrain.setFloat(TERRAIN_TEXTURE_SCALE_NAMES[0], 64f);
+
+    Texture mountain = assetManager.loadTexture("Textures/mountain2.jpg");
  
     /** 1.3) Add DIRT texture into the green layer (Tex2) */
-    Texture dirt = assetManager.loadTexture(
+    /*Texture dirt = assetManager.loadTexture(
             "Textures/Terrain/splat/dirt.jpg");
-    dirt.setWrap(WrapMode.Repeat);
-    mat_terrain.setTexture(TERRAIN_TEXTURE_NAMES[1], dirt);
-    mat_terrain.setFloat(TERRAIN_TEXTURE_SCALE_NAMES[1], 32f);
+    dirt.setWrap(WrapMode.Repeat);*/
+    mountain.setWrap(WrapMode.Repeat);
+    mat_terrain.setTexture(TERRAIN_TEXTURE_NAMES[1], mountain);
+    mat_terrain.setFloat(TERRAIN_TEXTURE_SCALE_NAMES[1], 512f);
  
     /** 1.4) Add ROAD texture into the blue layer (Tex3) */
     Texture water = assetManager.loadTexture("Textures/water.png");
