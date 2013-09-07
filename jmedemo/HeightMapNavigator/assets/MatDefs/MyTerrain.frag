@@ -26,6 +26,7 @@ void main(void)
 
     // get the alpha value at this 2D texture coord
     vec4 alpha   = texture2D( m_Alpha, texCoord.xy );
+    vec4 alpha2   = texture2D( m_Alpha_2, texCoord.xy );
 
 #ifdef TRI_PLANAR_MAPPING
     // tri-planar texture bending factor for this fragment's normal
@@ -59,11 +60,13 @@ void main(void)
 	tex1    = texture2D( m_Tex1, texCoord.xy * m_Tex1Scale ); // Tile
 	tex2    = texture2D( m_Tex2, texCoord.xy * m_Tex2Scale ); // Tile
 	tex3    = texture2D( m_Tex3, texCoord.xy * m_Tex3Scale ); // Tile
+    tex4    = texture2D( m_Tex4, texCoord.xy * m_Tex4Scale ); // Tile
 	
 #endif
 
     tex1 *= alpha.r; // Red channel
 	tex2 = mix( tex1, tex2, alpha.g ); // Green channel
 	outColor = mix( tex2, tex3, alpha.b ); // Blue channel
+    outColor = mix( outColor, tex4, alpha2.r); 
 	gl_FragColor = outColor;
 }

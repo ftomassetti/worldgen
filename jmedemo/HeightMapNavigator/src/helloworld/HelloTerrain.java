@@ -71,13 +71,13 @@ public class HelloTerrain extends SimpleApplication implements ActionListener {
   private float initialWaterHeight = 0.0f; // choose a value for your scene
 
   private static String[] TERRAIN_TEXTURE_NAMES = new String[]{
-      "Tex1", "Tex2", "Tex3"
+      "Tex1", "Tex2", "Tex3","Tex4"
   };
   private static String[] TERRAIN_TEXTURE_SCALE_NAMES = new String[]{
-      "Tex1Scale", "Tex2Scale", "Tex3Scale"
+      "Tex1Scale", "Tex2Scale", "Tex3Scale","Tex4Scale"
   };
   private static String[] ALPHA_TEXTURE_NAMES = new String[]{
-    "Alpha"
+    "Alpha","Alpha_2"
   };
   //private static String TERRAIN_MATERIAL_NAME = "Common/MatDefs/Terrain/Terrain.j3md";
   private static String TERRAIN_MATERIAL_NAME = "MatDefs/MyTerrain.j3md";
@@ -180,11 +180,16 @@ public class HelloTerrain extends SimpleApplication implements ActionListener {
             counters[1]++;
           } else {
             val = 100.0f+((elev*155.0f)/8000.0f);
-            if (elev<500){
-              r = 255;
+            if (elev<100){
+              r2 = 255;
               g = 0;
               b = 0;
               counters[2]++;
+            } else if (elev<500){
+              r = 255;
+              g = 0;
+              b = 0;
+              counters[2]++;              
             } else {
               r = 0;
               g = 255;
@@ -205,9 +210,9 @@ public class HelloTerrain extends SimpleApplication implements ActionListener {
             put((byte) b).
             put((byte) a);
           textureData_2.     
-            put((byte) 0).
-            put((byte) 0).
-            put((byte) 0).
+            put((byte) r2).
+            put((byte) g2).
+            put((byte) b2).
             put((byte) 255);            
         }
       }
@@ -245,7 +250,7 @@ assetManager.registerLocator("/Users/federico/repos/worldgen/jmedemo/HeightMapNa
 
     Texture alpha_texture2 = new Texture2D();
     alpha_texture2.setImage(textureImage_2);
-    //mat_terrain.setTexture(ALPHA_TEXTURE_NAMES[1], alpha_texture2);
+    mat_terrain.setTexture(ALPHA_TEXTURE_NAMES[1], alpha_texture2);
 
     //System.out.println("Image at 1000,1000: "+textureImage)
 
@@ -276,6 +281,10 @@ assetManager.registerLocator("/Users/federico/repos/worldgen/jmedemo/HeightMapNa
     rock.setWrap(WrapMode.Repeat);
     mat_terrain.setTexture(TERRAIN_TEXTURE_NAMES[2], water);
     mat_terrain.setFloat(TERRAIN_TEXTURE_SCALE_NAMES[2], 128f);
+
+    beach.setWrap(WrapMode.Repeat);
+    mat_terrain.setTexture(TERRAIN_TEXTURE_NAMES[3], beach);
+    mat_terrain.setFloat(TERRAIN_TEXTURE_SCALE_NAMES[3], 128f);
  
     /** 3. We have prepared material and heightmap. 
      * Now we create the actual terrain:
