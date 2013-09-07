@@ -58,10 +58,11 @@ public class HelloTerrain extends SimpleApplication {
     short map_height = 1025;
 
     ByteBuffer textureData = ByteBuffer.allocateDirect(map_width*map_height*4);
+    ByteBuffer textureData_2 = ByteBuffer.allocateDirect(map_width*map_height*4);
     float[] myHeightMap = new float[map_width * map_height];
     
     System.out.println("LOADING MAP... START");
-int[] counters = new int[]{0,0,0,0};
+    int[] counters = new int[]{0,0,0,0};
     try {
       String path = "/Users/federico/my_world/elevation_java";
       RandomAccessFile rac = new RandomAccessFile(path, "rw");
@@ -74,13 +75,14 @@ int[] counters = new int[]{0,0,0,0};
       MappedByteBuffer mbb_values = fc.map(rw_mode, 4, fc.size()-4);
 
       
-      int startx = 1500;
+      int startx = 1000;
       int starty = 500;
-      for (int y=0;y<map_width ;y++){
-        for (int x=0;x<map_height;x++){
+      for (int x=0;x<map_width ;x++){
+        for (int y=0;y<map_height;y++){
           float elev = mbb_values.getFloat((((y+starty)*width)<<2)+((x+startx)<<2));
           float val = 0.0f;
-          char r=0,g=0,b=0,a=255;
+          int r=0,g=0,b=0,a=255;
+          int r2=0,g2=0,b2=0,a2=0;
           if (elev<=0) {
             val=0.0f;
             r = 0;
@@ -91,7 +93,7 @@ int[] counters = new int[]{0,0,0,0};
             val=255.0f;
             counters[1]++;
           } else {
-            val = (elev/8000.0f)*255.0f;
+            val = (elev*255.0f)/8000.0f;
             if (elev<500){
               r = 255;
               g = 0;
@@ -104,7 +106,11 @@ int[] counters = new int[]{0,0,0,0};
               counters[3]++;          
             }
           }
-          myHeightMap[y*map_width+x]=val;
+          if (b>0 && val>0){
+            System.out.println("Strange... "+elev);
+          }
+          int ix = map_width - (x+1);
+          myHeightMap[ix*map_width+y]=val;
 
           //System.out.println("ASKING: "+((y*513+x)*3+2));
           // textureData.putChar((y*513+x)*3+0,b); 
@@ -132,6 +138,7 @@ int[] counters = new int[]{0,0,0,0};
 
 
     Image textureImage = new Image(Image.Format.RGBA8,map_width,map_height,textureData);
+    Image textureImage_2 = new Image(Image.Format.RGBA8,map_width,map_height,textureData_2);
  
     /** 1. Create terrain material and load four textures into it. */
     mat_terrain = new Material(assetManager, 
@@ -139,6 +146,10 @@ int[] counters = new int[]{0,0,0,0};
  
     /** 1.1) Add ALPHA map (for red-blue-green coded splat textures) */
     Texture alpha_texture = new Texture2D();
+    alpha_texture.setImage(textureImage);
+    mat_terrain.setTexture("Alpha", alpha_texture);
+
+    Texture alpha_texture2 = new Texture2D();
     alpha_texture.setImage(textureImage);
     mat_terrain.setTexture("Alpha", alpha_texture);
 
@@ -164,11 +175,16 @@ int[] counters = new int[]{0,0,0,0};
     mat_terrain.setFloat("Tex2Scale", 32f);
  
     /** 1.4) Add ROAD texture into the blue layer (Tex3) */
-    /*Texture rock = assetManager.loadTexture(
+    Texture water = assetManager.loadTexture("Textures/water.png");
+    Texture beach = assetManager.loadTexture("Textures/beach.png");
+
+    Texture rock = assetManager.loadTexture(
             "Textures/Terrain/splat/road.jpg");
     rock.setWrap(WrapMode.Repeat);
-    mat_terrain.setTexture("Tex3", rock);
-    mat_terrain.setFloat("Tex3Scale", 128f);*/
+    mat_terrain.setTexture("Tex3", water);
+    mat_terrain.setFloat("Tex3Scale", 128f);
+    //mat_terrain.setTexture("Tex4", beach);
+    //mat_terrain.setFloat("Tex4Scale", 128f);
  
     /** 2. Create the height map */
     /*AbstractHeightMap heightmap = null;
@@ -177,7 +193,7 @@ int[] counters = new int[]{0,0,0,0};
     heightmap = new ImageBasedHeightMap(heightMapImage.getImage());
     heightmap.load();*/
 
-   createSky();
+   //createSky();
  
     /** 3. We have prepared material and heightmap. 
      * Now we create the actual terrain:
