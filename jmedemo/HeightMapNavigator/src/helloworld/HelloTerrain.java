@@ -24,6 +24,9 @@ import com.jme3.util.SkyFactory;
 import com.jme3.light.DirectionalLight;
 import com.jme3.math.Vector3f;
 import com.jme3.scene.Spatial;
+import com.jme3.renderer.queue.RenderQueue.ShadowMode;
+import com.jme3.scene.Node;
+import com.jme3.math.ColorRGBA;
 
  
 /** Sample 10 - How to create fast-rendering terrains from heightmaps,
@@ -31,6 +34,7 @@ and how to use texture splatting to make the terrain look good.  */
 public class HelloTerrain extends SimpleApplication {
  
   private TerrainQuad terrain;
+  private Vector3f lightDir = new Vector3f(-4.9236743f, -1.27054665f, 5.896916f);
   Material mat_terrain;
  
   public static void main(String[] args) {
@@ -52,6 +56,18 @@ public class HelloTerrain extends SimpleApplication {
  
   @Override
   public void simpleInitApp() {
+    Node mainScene = new Node("Main Scene");
+    rootNode.attachChild(mainScene);
+
+    DirectionalLight sun = new DirectionalLight();
+    sun.setDirection(lightDir);
+    sun.setColor(ColorRGBA.White.clone().multLocal(1.7f));
+    mainScene.addLight(sun);
+
+    Spatial sky = SkyFactory.createSky(assetManager, "Scenes/Beach/FullskiesSunset0068.dds", false);
+        sky.setLocalScale(350);
+        mainScene.attachChild(sky);
+
     flyCam.setMoveSpeed(50);
 
     short map_width = 2049;
@@ -216,6 +232,7 @@ public class HelloTerrain extends SimpleApplication {
     terrain.setMaterial(mat_terrain);
     terrain.setLocalTranslation(0, -100, 0);
     terrain.setLocalScale(2f, 1f, 2f);
+    terrain.setShadowMode(ShadowMode.Receive);
     rootNode.attachChild(terrain);
 
     /*rootNode.attachChild(SkyFactory.createSky(
