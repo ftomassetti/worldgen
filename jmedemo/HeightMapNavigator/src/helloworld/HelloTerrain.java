@@ -54,8 +54,8 @@ public class HelloTerrain extends SimpleApplication {
   public void simpleInitApp() {
     flyCam.setMoveSpeed(50);
 
-    short map_width = 1025;
-    short map_height = 1025;
+    short map_width = 2049;
+    short map_height = 2049;
 
     ByteBuffer textureData = ByteBuffer.allocateDirect(map_width*map_height*4);
     ByteBuffer textureData_2 = ByteBuffer.allocateDirect(map_width*map_height*4);
@@ -75,11 +75,15 @@ public class HelloTerrain extends SimpleApplication {
       MappedByteBuffer mbb_values = fc.map(rw_mode, 4, fc.size()-4);
 
       
-      int startx = 1000;
-      int starty = 500;
+      int startx = 0;
+      int starty = 0;
       for (int x=0;x<map_width ;x++){
         for (int y=0;y<map_height;y++){
-          float elev = mbb_values.getFloat((((y+starty)*width)<<2)+((x+startx)<<2));
+          float elev = 0.0f;
+          if (x<3000 && y<2000){
+            elev = mbb_values.getFloat((((y+starty)*width)<<2)+((x+startx)<<2));
+            elev = elev / 3.0f;
+          }
           float val = 0.0f;
           int r=0,g=0,b=0,a=255;
           int r2=0,g2=0,b2=0,a2=0;
@@ -219,7 +223,7 @@ public class HelloTerrain extends SimpleApplication {
  
     /** 5. The LOD (level of detail) depends on were the camera is: */
     TerrainLodControl control = new TerrainLodControl(terrain, getCamera());
-    //control.setLodCalculator( new DistanceLodCalculator(65, 28.7f) );
+    control.setLodCalculator( new DistanceLodCalculator(65, 1000007f) );
     terrain.addControl(control);
   }
 }
