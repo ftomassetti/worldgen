@@ -69,6 +69,17 @@ public class HelloTerrain extends SimpleApplication implements ActionListener {
   private WaterFilter water;
   //private Vector3f lightDir = new Vector3f(-4.9f, -1.3f, 5.9f); // same as light source
   private float initialWaterHeight = 0.0f; // choose a value for your scene
+
+  private static String[] TERRAIN_TEXTURE_NAMES = new String[]{
+      "Tex1", "Tex2", "Tex3"
+  };
+  private static String[] TERRAIN_TEXTURE_SCALE_NAMES = new String[]{
+      "Tex1Scale", "Tex2Scale", "Tex3Scale"
+  };
+  private static String[] ALPHA_TEXTURE_NAMES = new String[]{
+    "Alpha"
+  };
+  private static String TERRAIN_MATERIAL_NAME = "Common/MatDefs/Terrain/Terrain.j3md";
  
   public static void main(String[] args) {
     HelloTerrain app = new HelloTerrain();
@@ -176,11 +187,16 @@ public class HelloTerrain extends SimpleApplication implements ActionListener {
           // textureData.putChar((y*513+x)*3+0,b); 
           // textureData.putChar((y*513+x)*3+1,g);
           // textureData.putChar((y*513+x)*3+2,r);
-              textureData.     
-          put((byte) r).
-          put((byte) g).
-          put((byte) b).
-          put((byte) a);
+          textureData.     
+            put((byte) r).
+            put((byte) g).
+            put((byte) b).
+            put((byte) a);
+          textureData_2.     
+            put((byte) 0).
+            put((byte) 0).
+            put((byte) 0).
+            put((byte) 255);            
         }
       }
 
@@ -201,17 +217,20 @@ public class HelloTerrain extends SimpleApplication implements ActionListener {
     Image textureImage_2 = new Image(Image.Format.RGBA8,map_width,map_height,textureData_2);
  
     /** 1. Create terrain material and load four textures into it. */
-    mat_terrain = new Material(assetManager, 
-            "Common/MatDefs/Terrain/Terrain.j3md");
+    mat_terrain = new Material(assetManager, TERRAIN_MATERIAL_NAME);
+
+    //mat_terrain = new Material(assetManager, "Common/MatDefs/Terrain/TerrainLighting.j3md");
+    //mat_terrain.setBoolean("useTriPlanarMapping", false);
+    //mat_terrain.setFloat("Shininess", 0.0f);
  
     /** 1.1) Add ALPHA map (for red-blue-green coded splat textures) */
     Texture alpha_texture = new Texture2D();
     alpha_texture.setImage(textureImage);
-    mat_terrain.setTexture("Alpha", alpha_texture);
+    mat_terrain.setTexture(ALPHA_TEXTURE_NAMES[0], alpha_texture);
 
     Texture alpha_texture2 = new Texture2D();
-    alpha_texture.setImage(textureImage);
-    mat_terrain.setTexture("Alpha", alpha_texture);
+    alpha_texture2.setImage(textureImage_2);
+    //mat_terrain.setTexture("Alpha", alpha_texture);
 
     //System.out.println("Image at 1000,1000: "+textureImage)
 
@@ -224,15 +243,15 @@ public class HelloTerrain extends SimpleApplication implements ActionListener {
     Texture grass = assetManager.loadTexture(
             "Textures/Terrain/splat/grass.jpg");
     grass.setWrap(WrapMode.Repeat);
-    mat_terrain.setTexture("Tex1", grass);
-    mat_terrain.setFloat("Tex1Scale", 64f);
+    mat_terrain.setTexture(TERRAIN_TEXTURE_NAMES[0], grass);
+    mat_terrain.setFloat(TERRAIN_TEXTURE_SCALE_NAMES[0], 64f);
  
     /** 1.3) Add DIRT texture into the green layer (Tex2) */
     Texture dirt = assetManager.loadTexture(
             "Textures/Terrain/splat/dirt.jpg");
     dirt.setWrap(WrapMode.Repeat);
-    mat_terrain.setTexture("Tex2", dirt);
-    mat_terrain.setFloat("Tex2Scale", 32f);
+    mat_terrain.setTexture(TERRAIN_TEXTURE_NAMES[1], dirt);
+    mat_terrain.setFloat(TERRAIN_TEXTURE_SCALE_NAMES[1], 32f);
  
     /** 1.4) Add ROAD texture into the blue layer (Tex3) */
     Texture water = assetManager.loadTexture("Textures/water.png");
@@ -241,8 +260,8 @@ public class HelloTerrain extends SimpleApplication implements ActionListener {
     Texture rock = assetManager.loadTexture(
             "Textures/Terrain/splat/road.jpg");
     rock.setWrap(WrapMode.Repeat);
-    mat_terrain.setTexture("Tex3", water);
-    mat_terrain.setFloat("Tex3Scale", 128f);
+    mat_terrain.setTexture(TERRAIN_TEXTURE_NAMES[2], water);
+    mat_terrain.setFloat(TERRAIN_TEXTURE_SCALE_NAMES[2], 128f);
     //mat_terrain.setTexture("Tex4", beach);
     //mat_terrain.setFloat("Tex4Scale", 128f);
  
