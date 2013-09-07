@@ -27,14 +27,42 @@ import com.jme3.scene.Spatial;
 import com.jme3.renderer.queue.RenderQueue.ShadowMode;
 import com.jme3.scene.Node;
 import com.jme3.math.ColorRGBA;
+import com.jme3.app.SimpleApplication;
+import com.jme3.bullet.BulletAppState;
+import com.jme3.bullet.collision.shapes.CapsuleCollisionShape;
+import com.jme3.bullet.collision.shapes.CollisionShape;
+import com.jme3.bullet.control.CharacterControl;
+import com.jme3.bullet.control.RigidBodyControl;
+import com.jme3.bullet.util.CollisionShapeFactory;
+import com.jme3.input.KeyInput;
+import com.jme3.input.controls.ActionListener;
+import com.jme3.input.controls.KeyTrigger;
+import com.jme3.material.Material;
+import com.jme3.math.Vector3f;
+import com.jme3.renderer.Camera;
+import com.jme3.scene.Node;
+import com.jme3.terrain.geomipmap.TerrainLodControl;
+import com.jme3.terrain.heightmap.AbstractHeightMap;
+import com.jme3.terrain.geomipmap.TerrainQuad;
+import com.jme3.terrain.heightmap.ImageBasedHeightMap;
+import com.jme3.texture.Texture;
+import com.jme3.texture.Texture.WrapMode;
+import java.util.ArrayList;
+import java.util.List;
+import jme3tools.converters.ImageToAwt;
 
  
 /** Sample 10 - How to create fast-rendering terrains from heightmaps,
 and how to use texture splatting to make the terrain look good.  */
-public class HelloTerrain extends SimpleApplication {
+public class HelloTerrain extends SimpleApplication implements ActionListener {
  
   private TerrainQuad terrain;
   private Vector3f lightDir = new Vector3f(-4.9236743f, -1.27054665f, 5.896916f);
+  private BulletAppState bulletAppState;
+  private RigidBodyControl landscape;
+  private CharacterControl player;
+  private Vector3f walkDirection = new Vector3f();
+  private boolean left = false, right = false, up = false, down = false;
   Material mat_terrain;
  
   public static void main(String[] args) {
@@ -56,6 +84,11 @@ public class HelloTerrain extends SimpleApplication {
  
   @Override
   public void simpleInitApp() {
+    /** Set up Physics */
+    bulletAppState = new BulletAppState();
+    stateManager.attach(bulletAppState);
+
+
     Node mainScene = new Node("Main Scene");
     rootNode.attachChild(mainScene);
 
@@ -68,7 +101,8 @@ public class HelloTerrain extends SimpleApplication {
         sky.setLocalScale(350);
         mainScene.attachChild(sky);
 
-    flyCam.setMoveSpeed(50);
+    flyCam.setMoveSpeed(150);
+    setUpKeys();
 
     short map_width = 2049;
     short map_height = 2049;
@@ -242,5 +276,77 @@ public class HelloTerrain extends SimpleApplication {
     TerrainLodControl control = new TerrainLodControl(terrain, getCamera());
     control.setLodCalculator( new DistanceLodCalculator(65, 1000007f) );
     terrain.addControl(control);
+
+    // We set up collision detection for the scene by creating a static 
+    /* RigidBodyControl with mass zero.*/
+    terrain.addControl(new RigidBodyControl(0));
+ 
+    // We set up collision detection for the player by creating
+    // a capsule collision shape and a CharacterControl.
+    // The CharacterControl offers extra settings for
+    // size, stepheight, jumping, falling, and gravity.
+    // We also put the player in its starting position.
+    CapsuleCollisionShape capsuleShape = new CapsuleCollisionShape(1.5f, 6f, 1);
+    player = new CharacterControl(capsuleShape, 0.05f);
+    player.setJumpSpeed(20);
+    player.setFallSpeed(30);
+    player.setGravity(0);
+    player.setPhysicsLocation(new Vector3f(-10, 10, 10));
+ 
+    // We attach the scene and the player to the rootnode and the physics space,
+    // to make them appear in the game world.
+    bulletAppState.getPhysicsSpace().add(terrain);
+    bulletAppState.getPhysicsSpace().add(player);
+  }
+
+  /**
+   * This is the main event loop--walking happens here.
+   * We check in which direction the player is walking by interpreting
+   * the camera direction forward (camDir) and to the side (camLeft).
+   * The setWalkDirection() command is what lets a physics-controlled player walk.
+   * We also make sure here that the camera moves with player.
+   */
+  @Override
+  public void simpleUpdate(float tpf) {
+    Vector3f camDir = cam.getDirection().clone().multLocal(0.6f);
+    Vector3f camLeft = cam.getLeft().clone().multLocal(0.4f);
+    walkDirection.set(0, 0, 0);
+    if (left)  { walkDirection.addLocal(camLeft); }
+    if (right) { walkDirection.addLocal(camLeft.negate()); }
+    if (up)    { walkDirection.addLocal(camDir); }
+    if (down)  { walkDirection.addLocal(camDir.negate()); }
+    player.setWalkDirection(walkDirection);
+    cam.setLocation(player.getPhysicsLocation());
+  }
+
+  /** These are our custom actions triggered by key presses.
+   * We do not walk yet, we just keep track of the direction the user pressed. */
+  public void onAction(String binding, boolean value, float tpf) {
+    if (binding.equals("Left")) {
+      if (value) { left = true; } else { left = false; }
+    } else if (binding.equals("Right")) {
+      if (value) { right = true; } else { right = false; }
+    } else if (binding.equals("Up")) {
+      if (value) { up = true; } else { up = false; }
+    } else if (binding.equals("Down")) {
+      if (value) { down = true; } else { down = false; }
+    } else if (binding.equals("Jump")) {
+      player.jump();
+    }
+  }
+
+    /** We over-write some navigational key mappings here, so we can
+   * add physics-controlled walking and jumping: */
+  private void setUpKeys() {
+    inputManager.addMapping("Left", new KeyTrigger(KeyInput.KEY_A));
+    inputManager.addMapping("Right", new KeyTrigger(KeyInput.KEY_D));
+    inputManager.addMapping("Up", new KeyTrigger(KeyInput.KEY_W));
+    inputManager.addMapping("Down", new KeyTrigger(KeyInput.KEY_S));
+    inputManager.addMapping("Jump", new KeyTrigger(KeyInput.KEY_SPACE));
+    inputManager.addListener(this, "Left");
+    inputManager.addListener(this, "Right");
+    inputManager.addListener(this, "Up");
+    inputManager.addListener(this, "Down");
+    inputManager.addListener(this, "Jump");
   }
 }
