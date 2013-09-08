@@ -10,6 +10,29 @@ class Map
 	attr_accessor :height
 	attr_accessor :mbb
 
+	def self.from_array(array,path)
+		rac = RandomAccessFile.new path, 'rw'
+		fc = rac.channel
+		rw_mode = FileChannel::MapMode::READ_WRITE
+		width  = map_width(array)
+		height = map_height(array)
+		size = 2*width*height
+		mbb_metadata = fc.map rw_mode, 0, 4
+		mbb_metadata.putShort width
+		mbb_metadata.putShort height
+		mbb_values = fc.map rw_mode, 4, size
+		for y in 0..(height-1)
+			for x in 0..(width-1)
+				mbb_values.putShort array[y][x]
+			end
+		end
+		map = Map.new
+		map.width = width
+		map.height = height
+		map.mbb = mbb_values 
+		map
+	end
+
 	def self.load(path)
 		rac = RandomAccessFile.new path, 'rw'
 		fc = rac.channel
@@ -28,7 +51,7 @@ class Map
 	end
 
 	def save
-		@mbb.force(true)
+		@mbb.force#(true)
 	end
 
 	def get(x,y=nil)

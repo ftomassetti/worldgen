@@ -7,17 +7,17 @@ require 'worldgen/noises'
 
 module WorldGen
 
-def plaques_at_border_of_the_map(w,h,plaques)
-	border_plaques = Set.new
+def plates_at_border_of_the_map(w,h,plates)
+	border_plates = Set.new
 	Rectangle.new(w,h).each_border_point do |x,y|
-		border_plaques << plaques[y][x]
+		border_plates << plates[y][x]
 	end
-	border_plaques
+	border_plates
 end
 
-def number_of_plaques(w,h,plaques)
+def number_of_plates(w,h,plates)
 	max = -1
-	each_in_map(w,h,plaques) do |x,y,plaque_index|
+	each_in_map(w,h,plates) do |x,y,plaque_index|
 		max=plaque_index if plaque_index>max
 	end
 	max+1
@@ -31,15 +31,17 @@ def points_of_plaque(w,h,map,index)
 	points
 end
 
-def generate_plaques(width,height,n_hot_points,disturb_strength=25,seed)
-	log "generate plaques started: dim=#{width}x#{height}, n_hot_points: #{n_hot_points}, seed: #{seed}"
+def generate_plates(width,height,n_hot_points,disturb_strength=25,seed)
+	log "generate plates started: dim=#{width}x#{height}, n_hot_points: #{n_hot_points}, seed: #{seed}"
 	general_random = Random.new seed
 	log "generating hot points"
 	hot_points = gen_hot_points(width,height,n_hot_points,Random.new(general_random.seed))
 	log "building distances map"
 	distances_map = calc_hotpoints_distances_map(width,height,hot_points)
-	log "disturbing distances map"
-	disturb_distances_map(width,height,hot_points,distances_map,disturb_strength,general_random.rand(100000))
+	if disturb_strength>0
+		log "disturbing distances map"
+		disturb_distances_map(width,height,hot_points,distances_map,disturb_strength,general_random.rand(100000))
+	end
 end
 
 def gen_hot_points(w,h,n,random)
@@ -93,14 +95,14 @@ end
 
 def polish_plates(w,h,plates)
 	log "Breaking plates in blocks"
-	break_plaques_in_blocks(w,h,plates)
+	break_plates_in_blocks(w,h,plates)
 	log "Inglobing surrounded block"
 	inglobe_surrounded_blocks(w,h,plates)
 end
 
-def points_of_the_plaque(w,h,plaques,plaque_index)
+def points_of_the_plaque(w,h,plates,plaque_index)
 	points = []
-	each_in_map(w,h,plaques) do |x,y,val|
+	each_in_map(w,h,plates) do |x,y,val|
 		points << [x,y] if val==plaque_index
 	end
 	points
@@ -126,37 +128,37 @@ def expand_block(w,h,map,block,p,val)
 end
 
 # Each plaque having not contiguos points is broken
-def break_plaques_in_blocks(w,h,plaques)
-	n_plaques = number_of_plaques(w,h,plaques)
+def break_plates_in_blocks(w,h,plates)
+	n_plates = number_of_plates(w,h,plates)
 	plaque_index=0
-	while plaque_index<n_plaques
+	while plaque_index<n_plates
 		log "breaking plaque #{plaque_index}"
-		all_points = points_of_the_plaque(w,h,plaques,plaque_index)
+		all_points = points_of_the_plaque(w,h,plates,plaque_index)
 		if all_points.count>0
 			start_point = all_points[0]
 			main_block = []
-			expand_block(w,h,plaques,main_block,start_point,plaque_index)
+			expand_block(w,h,plates,main_block,start_point,plaque_index)
 			toremove = all_points.select {|p| not main_block.include? p}			
 			if toremove.count>0
 				log "plaque to be broken, #{toremove.count} points removed, #{main_block.count} kept"
-				toremove.each {|p| x,y=p; plaques[y][x] = n_plaques}
-				n_plaques += 1				
+				toremove.each {|p| x,y=p; plates[y][x] = n_plates}
+				n_plates += 1				
 			end			
 		end
 		plaque_index += 1
 	end
 end
 
-def get_first_neighbor_in_dir(w,h,plaques,start_point,dir)
+def get_first_neighbor_in_dir(w,h,plates,start_point,dir)
 	x,y = start_point
-	my_plaque_index = plaques[y][x]
+	my_plaque_index = plates[y][x]
 
 	while true
 		next_x = x+dir[0]
 		next_y = y+dir[1]
 		next_point = [next_x,next_y]
 		if Rectangle.new(w,h).include?(next_point)
-			other_plaque_index = plaques[next_y][next_x]
+			other_plaque_index = plates[next_y][next_x]
 			if other_plaque_index!=my_plaque_index
 				return other_plaque_index
 			else
@@ -169,17 +171,17 @@ def get_first_neighbor_in_dir(w,h,plaques,start_point,dir)
 	end
 end
 
-def get_first_neighbors_in_all_dirs(w,h,plaques,start_point)
-	[get_first_neighbor_in_dir(w,h,plaques,start_point,[0,-1]),
-		get_first_neighbor_in_dir(w,h,plaques,start_point,[1,0]),
-		get_first_neighbor_in_dir(w,h,plaques,start_point,[0,1]),
-		get_first_neighbor_in_dir(w,h,plaques,start_point,[-1,0])]
+def get_first_neighbors_in_all_dirs(w,h,plates,start_point)
+	[get_first_neighbor_in_dir(w,h,plates,start_point,[0,-1]),
+		get_first_neighbor_in_dir(w,h,plates,start_point,[1,0]),
+		get_first_neighbor_in_dir(w,h,plates,start_point,[0,1]),
+		get_first_neighbor_in_dir(w,h,plates,start_point,[-1,0])]
 end
 
-def container_inglobing_points(w,h,plaques,all_points)
+def container_inglobing_points(w,h,plates,all_points)
 	all_neighbors = []
 	all_points.each do |p|
-		new_neighbours = get_first_neighbors_in_all_dirs(w,h,plaques,p)
+		new_neighbours = get_first_neighbors_in_all_dirs(w,h,plates,p)
 		new_neighbours.select {|v| v!=nil}.each {|v| all_neighbors << v unless all_neighbors.include?(v)}
 		if all_neighbors.count>1
 			return nil # more than one neighbour
@@ -191,17 +193,17 @@ def container_inglobing_points(w,h,plaques,all_points)
 end
 
 # If a glob is totally contained by another block, the inner block become part of the outer block
-def inglobe_surrounded_blocks(w,h,plaques)
-	n_plaques = number_of_plaques(w,h,plaques)
-	n_plaques.times do |plaque_index|
+def inglobe_surrounded_blocks(w,h,plates)
+	n_plates = number_of_plates(w,h,plates)
+	n_plates.times do |plaque_index|
 		log "considering for inglobation #{plaque_index}"
-		all_points = points_of_the_plaque(w,h,plaques,plaque_index)		
+		all_points = points_of_the_plaque(w,h,plates,plaque_index)		
 		if all_points.count>0						
-			parent = container_inglobing_points(w,h,plaques,all_points)
+			parent = container_inglobing_points(w,h,plates,all_points)
 			if parent
 				# ok, inglobe
 				log "Going to inglone #{plaque_index} in #{parent}"
-				all_points.each {|p| x,y=p; plaques[y][x] = parent}
+				all_points.each {|p| x,y=p; plates[y][x] = parent}
 			end
 		end
 	end

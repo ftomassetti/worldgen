@@ -1,4 +1,4 @@
-# Program to perform initial generation of plaques
+# Program to perform initial generation of plates
 
 require 'worldgen/plates'
 require 'worldgen/math'
@@ -37,10 +37,11 @@ ARGV[2..-1].each do |arg|
 end
 
 def perform_generation(width,height,n_hot_points,disturb_strength,seed)
-	plates = generate_plaques(width,height,n_hot_points,disturb_strength,seed)
+	plates = generate_plates(width,height,n_hot_points,disturb_strength,seed)
 
 	if $SAVING
-		save_marshal_file($OUTPUT, plates)
+		Map.from_array(plates,$OUTPUT).save
+		#save_marshal_file($OUTPUT, plates)
 	end
 
 	if $SHOW
