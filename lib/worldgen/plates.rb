@@ -56,6 +56,7 @@ def merge_plates(map,n_final_plates,r)
 	plate_sizes = {}
 	plates.each do |p|
 		plate_sizes[p] = points_of_the_plate(map,p).count
+		raise "Zero points for plates #{p}" if plate_sizes[p]==0
 	end
 
 	raise "too few plates" if plates.count<n_final_plates
@@ -65,9 +66,11 @@ def merge_plates(map,n_final_plates,r)
 		puts "Reduction (#{plates.count} plates)"
 		# get a random plate
 		# TODO, favor smaller plates
-		start_plate = plates[r.rand(plates.count)]
+		small_plates = ((plate_sizes.sort_by { |k,v| v }).map{|k,v| k})[0..5]
+		start_plate = small_plates[r.rand(small_plates.count)]
 		# get a random point
 		start_plate_points = points_of_the_plate(map,start_plate)
+		raise "Plate #{start_plate} has zero points" if start_plate_points.count==0
 		p = start_plate_points[r.rand(start_plate_points.count)]
 		p = MapPoint.new(p[0],p[1],map)
 		puts "\tStart plate #{start_plate} #{p}"
@@ -87,6 +90,8 @@ def merge_plates(map,n_final_plates,r)
 			end
 		end
 		plates.delete(end_plate)
+		rem = plate_sizes.delete(end_plate)
+		plate_sizes[start_plate] += rem 
 		puts "\treassign done"
 	end
 end
