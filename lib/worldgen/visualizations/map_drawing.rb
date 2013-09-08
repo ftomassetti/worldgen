@@ -17,11 +17,11 @@ def zoom(level,&original)
 end
 
 def shadow_color(altitude,color,x,y)
-	alt = altitude[y][x]
+	alt = altitude.get(x,y)
 	delta = 0
 	for dist in 0..4
 		if x>dist and y >dist
-			other = altitude[y-1-dist][x-1-dist]
+			other = altitude.get(x-1-dist,x-1-dist)
 			diff = other-alt
 			delta+=diff/(1+dist) if other>alt	
 		end

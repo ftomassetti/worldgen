@@ -19,22 +19,30 @@ show_usage if ARGV.count<3
 $INPUT  = ARGV[0]
 $OUTPUT = ARGV[1]
 $SEED   = ARGV[2].to_i
+$NOISE_POWER = 1.0
 $SEANESS = 0.35
 
 ARGV[3..-1].each do |arg|
 	name,value = arg.split ':'
-	error "Unknown param: #{name}"
+	case name
+	when 'noise'
+		$NOISE_POWER = value.to_f
+	else
+		error "Unknown param: #{name}"
+	end
 end
 
-def perform_continental_base_calculation(w,h,plates,seed)
-	continental_base = calculate_continental_base(w,h,plates,seed,$SEANESS)	
+def perform_continental_base_calculation(plates,seed)
+	w = plates.width
+	h = plates.height
+	continental_base = calculate_continental_base(plates,seed,$SEANESS,$OUTPUT,$NOISE_POWER)	
 
-	save_marshal_file($OUTPUT,continental_base) if $SAVING
+	continental_base.save if $SAVING
 
 	if $SHOW
 		colors = Colors.new
 		draw_code = Proc.new do |x,y|
-			colors.get(continental_base[y][x])
+			colors.get(continental_base.get(x,y))
 		end
 
 		mf = MapFrame.new("Continental base, seed #{seed}", w, h, draw_code)
@@ -42,10 +50,8 @@ def perform_continental_base_calculation(w,h,plates,seed)
 	end
 end
 
-plates = load_marshal_file($INPUT)
-width = map_width(plates)
-height = map_height(plates)
+plates = Map.load($INPUT,:short)
 
-perform_continental_base_calculation(width,height,plates,$SEED) 
+perform_continental_base_calculation(plates,$SEED) 
 
 puts "done."

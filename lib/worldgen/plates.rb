@@ -7,10 +7,12 @@ require 'worldgen/noises'
 
 module WorldGen
 
-def plates_at_border_of_the_map(w,h,plates)
+def plates_at_border_of_the_map(plates)
+	w = plates.width
+	h = plates.height
 	border_plates = Set.new
 	Rectangle.new(w,h).each_border_point do |x,y|
-		border_plates << plates[y][x]
+		border_plates << plates.get(x,y)
 	end
 	border_plates
 end

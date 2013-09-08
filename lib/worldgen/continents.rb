@@ -5,22 +5,26 @@ require 'worldgen/noises'
 
 module WorldGen
 
-def add_noise(w,h,map,seed)
+def add_noise(map,seed,noise_power)
+	w = map.width
+	h = map.height
 	cp = CombinedSimplex.new 3,seed,4,256
-	derive_map_from_map(map,w,h,'adding noise') do |x,y,orig_val|
+	map.reassign_each do |x,y,orig_val|
 		xp = 4.0*(x.to_f/w.to_f)
 		yp = 4.0*(y.to_f/h.to_f)
-		new_val = (cp.get xp,yp)*1000+300
+		new_val = ((cp.get xp,yp)*100+30)*noise_power
 		orig_val+new_val
 	end
 end
 
-def calculate_continental_base(w,h,plaques,seed,seaness)
+def calculate_continental_base(plaques,seed,seaness,output,noise_power=1.0)
+	w = plaques.width
+	h = plaques.height
 	process_random = Random.new seed
 	log "Calculating border plaques"
-	border_plaques = plaques_at_border_of_the_map(w,h,plaques)
+	border_plaques = plates_at_border_of_the_map(plaques)
 
-	n_plaques = number_of_plaques(w,h,plaques)
+	n_plaques = number_of_plates(plaques)
 
 	platform_rand = Random.new(process_random.rand)	
 	border_rand   = Random.new(process_random.rand)
@@ -30,19 +34,22 @@ def calculate_continental_base(w,h,plaques,seed,seaness)
 		hash[plaque_i] = height_platform(border_plaques,platform_rand,plaque_i,seaness)
 	end
 
-	border_dists = Hash.new do |hash, plaque_i|
-		hash[plaque_i] = border_dists_rand.rand(15)+border_dists_rand.rand(15)
-	end
-
 	plates_sizes = Hash.new do |hash,plate_i|
-		hash[plate_i] = points_of_plaque(w,h,plaques,plate_i).count
+		sz = points_of_the_plate(plaques,plate_i).count
+		raise "Plate #{plate_i} has size zero" if sz==0
+		hash[plate_i] = sz
 	end
 
 	border_elevations = Hash.new do |hash, key| 
 		hash[key] = elevation_of_borders(plates_sizes,key[0],key[1],border_rand,platform_elevations)
 	end
 
-	plaques_borders_map(w,h,plaques,platform_elevations,border_elevations,border_dists,process_random.rand)
+	border_dists = Hash.new do |hash, plaque_i|
+		elev = border_elevations[plaque_i].abs
+		hash[plaque_i] = Math.log(elev,1.4)
+	end
+
+	plaques_borders_map(plaques,platform_elevations,border_elevations,border_dists,process_random.rand,output,noise_power)
 end
 
 def height_platform(border_plaques,random,plaque_i,seaness)
@@ -60,8 +67,13 @@ end
 def elevation_of_borders(plates_sizes,a,b,random,platform_elevations)
 	size_a = plates_sizes[a]
 	size_b = plates_sizes[b]
-	size_factor = (Math.log(size_a))/8.0*(Math.log(size_b))/8.0
-	raise "should not be negative" if size_factor<0.0
+	if size_a==0 or size_b==0
+		raise "Platforms having size zero"
+		size_factor = 0
+	else
+		size_factor = (Math.log(size_a))/8.0*(Math.log(size_b))/8.0
+	end
+	raise "should not be negative: #{size_factor}, calculated from size_a=#{size_a}, size_b=#{size_b}" if size_factor<0.0
 
 	pos_a = platform_elevations[a]>0
 	pos_b = platform_elevations[b]>0
@@ -94,22 +106,23 @@ end
 
 #MAX_DIST = 20
 
-def plaques_borders_map(w,h,plaques,platform_elevations,border_elevations,border_dists,seed)	
-
+def plaques_borders_map(plaques,platform_elevations,border_elevations,border_dists,seed,output,noise_power=1.0)	
+	w = plaques.width
+	h = plaques.height
 	#noise_source = Perlin::Noise.new(2, :seed => seed )
 	noise_source = simplex_noise((seed*2356).to_i)
 
-	derive_map_from_map(plaques,w,h,"calculating plaques borders") do |x,y,plaque_i|
+	plaques.derive_map(output,:float,"calculating plaques borders") do |x,y,plaque_i|
 		v=platform_elevations[plaque_i]
 		other = nil
 		max_dist = border_dists[plaque_i] # it is on per plaque base... let's see if it has sense
 		(1..max_dist).each do |d|
 			unless other 
 				attenuation = 1+max_dist-d
-				other = plaques[y][x-d] if x>d and plaques[y][x]!=plaques[y][x-d]
-				other = plaques[y][x+d] if x+d<w and plaques[y][x]!=plaques[y][x+d]
-				other = plaques[y-d][x] if y>d and plaques[y][x]!=plaques[y-d][x]
-				other = plaques[y+d][x] if y+d<h and plaques[y][x]!=plaques[y+d][x]
+				other = plaques.get(x-d,y) if x>d   and plaques.get(x,y)!=plaques.get(x-d,y)
+				other = plaques.get(x+d,y) if x+d<w and plaques.get(x,y)!=plaques.get(x+d,y)
+				other = plaques.get(x,y-d) if y>d   and plaques.get(x,y)!=plaques.get(x,y-d)
+				other = plaques.get(x,y+d) if y+d<h and plaques.get(x,y)!=plaques.get(x,y+d)
 			
 				if other
 					delta = border_elevations[[plaque_i,other]]/attenuation
@@ -117,7 +130,7 @@ def plaques_borders_map(w,h,plaques,platform_elevations,border_elevations,border
 					# add some noise
 					px = 16.0*(x.to_f/w.to_f)
 					py = 16.0*(y.to_f/h.to_f)
-					noise = (noise_source.noise(px,py)+1.0)/2.0
+					noise = ((noise_source.noise(px,py)+1.0)/2.0)*noise_power
 					delta *= (0.5+noise/2.0)
 					#puts "Delta #{delta}, d=#{d}, border=#{border_elevations[[plaque_i,other]]}"
 

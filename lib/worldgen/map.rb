@@ -52,6 +52,41 @@ class Map
 		end		
 	end
 
+	def derive_map(path,type=:float,desc=nil,&block)
+		Map.create_map(path,@width,@height,type,desc) do |x,y|
+			block.call(x,y,get(x,y))
+		end
+	end
+
+	def self.create_map(path,width,height,type=:float,desc=nil,&block)
+		rac = RandomAccessFile.new path, 'rw'
+		fc = rac.channel
+		rw_mode = FileChannel::MapMode::READ_WRITE
+		size = Map.type_size(type)*width*height
+		mbb_metadata = fc.map rw_mode, 0, 4
+		mbb_metadata.putShort width
+		mbb_metadata.putShort height
+		mbb_values = fc.map rw_mode, 4, size
+		height.times do |y|
+			width.times do |x|
+				v = block.call(x,y)
+				if type==:short
+					mbb_values.putShort v
+				elsif type==:float
+					mbb_values.putFloat v
+				else
+					raise "Unknown type"
+				end
+			end
+		end
+		map = Map.new
+		map.width = width
+		map.height = height
+		map.mbb = mbb_values
+		map.type = type 
+		map
+	end
+
 	def self.from_array(array,path,type=:short)
 		rac = RandomAccessFile.new path, 'rw'
 		fc = rac.channel
@@ -191,6 +226,32 @@ class Map
 		MapPoint.new(r.rand(@width),r.rand(@height),self)
 	end
 
+	def rescale(output,desired_w,desired_h,type=self.type)
+		Map.create_map(output,desired_w,desired_h,type) do |x,y|
+			original_x = ((x.to_f/desired_w.to_f)*@width).floor
+			original_y = ((y.to_f/desired_h.to_f)*@height).floor
+			get(original_x,original_y)
+		end
+	end
+
+	def antialias!(ntimes=1)
+		w = @width
+		h = @height
+		Rectangle.new(w,h).each do |x,y|
+			log "antialiasing #{ntimes}, y=#{y}" if x==0 and (y%25)==0
+			sum = 0
+			n = 0
+			each_around([x,y]) do |ax,ay|
+				if ax>=0 and ay>=0 and ax<w and ay<h
+					n+=1
+					sum+=get(ax,ay)
+				end
+			end
+			set(x,y,(sum.to_f/n.to_f).to_i)
+		end
+		antialias!(ntimes-1) if ntimes>1
+	end
+
 end
 
 def map_width(map)
@@ -239,30 +300,6 @@ def derive_map_from_map(orig,width,height,desc=nil,&block)
 	build_map(width,height,desc) do |x,y|
 		block.call(x,y,orig[y][x])
 	end
-end
-
-def rescale(curr,curr_w,curr_h,desired_w,desired_h)
-	build_map(desired_w,desired_h) do |x,y|
-		original_x = ((x.to_f/desired_w.to_f)*curr_w).floor
-		original_y = ((y.to_f/desired_h.to_f)*curr_h).floor
-		curr[original_y][original_x]
-	end
-end
-
-def antialias!(map,w,h,ntimes=1)
-	Rectangle.new(w,h).each do |x,y|
-		log "antialiasing #{ntimes}, y=#{y}" if x==0 and (y%25)==0
-		sum = 0
-		n = 0
-		each_around([x,y]) do |ax,ay|
-			if ax>=0 and ay>=0 and ax<w and ay<h
-				n+=1
-				sum+=map[ay][ax]
-			end
-		end
-		map[y][x] = (sum.to_f/n.to_f).to_i
-	end
-	antialias!(map,w,h,ntimes-1) if ntimes>1
 end
 
 end

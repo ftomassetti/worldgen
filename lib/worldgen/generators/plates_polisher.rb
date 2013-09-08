@@ -26,6 +26,7 @@ end
 def perfom_polishing(plates)
 	polished_map = plates.duplicate($OUTPUT)
 	polish_plates(polished_map)
+	defragment_plates(polished_map)
 
 	n_plates = number_of_plates(polished_map)
 	
