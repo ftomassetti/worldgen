@@ -1,5 +1,7 @@
 module WorldGen
 
+	DIRS = [ [0,-1],[1,-1],[1,0],[1,1],[0,1],[-1,1],[-1,0],[-1,-1]]
+
 	def surroundings(p,radius)
         s = []
         px,py = p

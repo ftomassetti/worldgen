@@ -1,39 +1,88 @@
 require 'worldgen/log'
+require 'worldgen/geometry'
 
 java_import java.nio.channels.FileChannel
 java_import java.io.RandomAccessFile
 
 module WorldGen
 
+class MapPoint
+	attr_accessor :x
+	attr_accessor :y
+
+	def initialize(x,y,map)
+		@x = x
+		@y = y
+		@map = map
+	end
+
+	def move_randomly(r=Random.new)
+		dx = nil
+		dy = nil
+		#puts "Move randomly start"
+		while (!dx) || (!dy) || (!@map.is_contained(dx,dy))
+			dir_x,dir_y = DIRS[r.rand(8)]
+			dx = @x+dir_x
+			dy = @y+dir_y
+			#puts "\tsel dx:#{dx} dy:#{dy}"
+		end 
+		#puts "Move randomly end"
+		MapPoint.new(dx,dy,@map)
+	end
+
+	def to_s
+		"(#{x},#{y})"
+	end
+
+end
+
 class Map
 	attr_accessor :width
 	attr_accessor :height
 	attr_accessor :mbb
+	attr_accessor :type
 
-	def self.from_array(array,path)
+	def self.type_size(type)
+		if type==:short
+			2
+		elsif type==:float
+			4			
+		else
+			raise "Unknown type"
+		end		
+	end
+
+	def self.from_array(array,path,type=:short)
 		rac = RandomAccessFile.new path, 'rw'
 		fc = rac.channel
 		rw_mode = FileChannel::MapMode::READ_WRITE
 		width  = map_width(array)
 		height = map_height(array)
-		size = 2*width*height
+		size = Map.type_size(type)*width*height
 		mbb_metadata = fc.map rw_mode, 0, 4
 		mbb_metadata.putShort width
 		mbb_metadata.putShort height
 		mbb_values = fc.map rw_mode, 4, size
 		for y in 0..(height-1)
 			for x in 0..(width-1)
-				mbb_values.putShort array[y][x]
+				if type==:short
+					mbb_values.putShort array[y][x]
+				elsif type==:float
+					mbb_values.putFloat array[y][x]
+				else
+					raise "Unknown type"
+				end
 			end
 		end
 		map = Map.new
 		map.width = width
 		map.height = height
-		map.mbb = mbb_values 
+		map.mbb = mbb_values
+		map.type = type 
 		map
 	end
 
-	def self.load(path)
+	def self.load(path,type=:float)
 		rac = RandomAccessFile.new path, 'rw'
 		fc = rac.channel
 		rw_mode = FileChannel::MapMode::READ_WRITE
@@ -43,6 +92,38 @@ class Map
 		map.width = mbb_metadata.getShort 0
 		map.height = mbb_metadata.getShort 2
 		map.mbb = mbb_values 
+		map.type = type
+		map
+	end
+
+	def duplicate(path)
+		rac = RandomAccessFile.new path, 'rw'
+		fc = rac.channel
+		rw_mode = FileChannel::MapMode::READ_WRITE
+		width  = @width
+		height = @height
+		size = Map.type_size(type)*width*height
+		mbb_metadata = fc.map rw_mode, 0, 4
+		mbb_metadata.putShort width
+		mbb_metadata.putShort height
+		mbb_values = fc.map rw_mode, 4, size
+		height.times do |y|
+			width.times do |x|
+				v = self.get(x,y)
+				if type==:short
+					mbb_values.putShort v
+				elsif type==:float
+					mbb_values.putFloat v
+				else
+					raise "Unknown type"
+				end
+			end
+		end
+		map = Map.new
+		map.width = width
+		map.height = height
+		map.mbb = mbb_values
+		map.type = @type 
 		map
 	end
 
@@ -54,13 +135,62 @@ class Map
 		@mbb.force#(true)
 	end
 
+	def is_contained(x,y=nil)
+		if y==nil
+			x,y = x
+		end
+		x>=0 && y>=0 && x<@width && y<@height
+	end
+
 	def get(x,y=nil)
 		if y==nil
 			x,y = x
 		end
-		raise "unvalid point" if x<0 or y<0 or x>=@width or y>=@height		
-		@mbb.getFloat(((y*@width)<<2)+(x<<2))
+		raise "unvalid point" if x<0 or y<0 or x>=@width or y>=@height
+		#puts "x=#{x},y=#{y},"		
+		if type==:short
+			@mbb.getShort(((y*@width)<<1)+(x<<1))
+		elsif type==:float
+			@mbb.getFloat(((y*@width)<<2)+(x<<2))
+		else
+			raise "Unknown type"
+		end
 	end
+
+	def set(x,y=nil,val)
+		if y==nil
+			x,y = x
+		end
+		raise "unvalid point" if x<0 or y<0 or x>=@width or y>=@height		
+		if type==:short
+			@mbb.putShort(((y*@width)<<1)+(x<<1),val)
+		elsif type==:float
+			@mbb.putFloat(((y*@width)<<2)+(x<<2),val)
+		else
+			raise "Unknown type"
+		end	
+	end
+
+	def each(&block)
+		@height.times do |y|
+			@width.times do |x|
+				block.call(x,y,get(x,y))			
+			end
+		end
+	end
+
+	def reassign_each(&block)
+		@height.times do |y|
+			@width.times do |x|
+				set(x,y,block.call(x,y,get(x,y)))			
+			end
+		end
+	end		
+
+	def random_point(r=Random.new)
+		MapPoint.new(r.rand(@width),r.rand(@height),self)
+	end
+
 end
 
 def map_width(map)

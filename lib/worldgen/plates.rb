@@ -15,12 +15,80 @@ def plates_at_border_of_the_map(w,h,plates)
 	border_plates
 end
 
-def number_of_plates(w,h,plates)
+def plates(plates_map)
+	plates = Set.new
+	plates_map.each do |x,y,plaque_index|
+		plates << plaque_index
+	end
+	plates
+end
+
+def number_of_plates(plates_map)
+	plates(plates_map).count
+end
+
+#
+# DEPRECATED: old version using the "array map"
+#
+def arraymap_number_of_plates(w,h,plates)
 	max = -1
 	each_in_map(w,h,plates) do |x,y,plaque_index|
 		max=plaque_index if plaque_index>max
 	end
 	max+1
+end
+
+def defragment_plates(map)
+	plates = plates(map)
+	n_plates = plates.count
+	conversion = {}
+	plates.each do |i|
+		conversion[i]=conversion.count
+	end
+	map.reassign_each do |x,y,old_i|
+		conversion[old_i]
+	end
+end
+
+def merge_plates(map,n_final_plates,r)
+	# calculate how many plates there are
+	plates = plates(map).to_a
+	plate_sizes = {}
+	plates.each do |p|
+		plate_sizes[p] = points_of_the_plate(map,p).count
+	end
+
+	raise "too few plates" if plates.count<n_final_plates
+	puts "Number of plates: #{plates.count}, reducing to #{n_final_plates}"
+	# loop until the number is reduced
+	while plates.count>n_final_plates
+		puts "Reduction (#{plates.count} plates)"
+		# get a random plate
+		# TODO, favor smaller plates
+		start_plate = plates[r.rand(plates.count)]
+		# get a random point
+		start_plate_points = points_of_the_plate(map,start_plate)
+		p = start_plate_points[r.rand(start_plate_points.count)]
+		p = MapPoint.new(p[0],p[1],map)
+		puts "\tStart plate #{start_plate} #{p}"
+		# move in random direction until a different plate is reached
+		while map.get(p.x,p.y)==start_plate
+			p = p.move_randomly(r)
+			#puts "\t\tmoving to #{p}"			
+		end
+		end_plate = map.get(p.x,p.y)
+		puts "\tend plate #{end_plate}"
+		# merge the two plates
+		map.reassign_each do |x,y,index|
+			if index==end_plate
+				start_plate
+			else
+				index
+			end
+		end
+		plates.delete(end_plate)
+		puts "\treassign done"
+	end
 end
 
 def points_of_plaque(w,h,map,index)
@@ -41,7 +109,20 @@ def generate_plates(width,height,n_hot_points,disturb_strength=25,seed)
 	if disturb_strength>0
 		log "disturbing distances map"
 		disturb_distances_map(width,height,hot_points,distances_map,disturb_strength,general_random.rand(100000))
-	end
+	else
+		derive_map_from_map(distances_map,width,height,'deriving plates map from distances map') do |x,y,distances|
+			max = width*height
+			sel_i = 0
+			hot_points.each_with_index do |hp,i|
+				tot = distances[i]
+				if tot<max
+					sel_i = i
+					max = tot
+				end
+			end
+			sel_i
+		end
+	end	
 end
 
 def gen_hot_points(w,h,n,random)
@@ -100,7 +181,15 @@ def polish_plates(w,h,plates)
 	inglobe_surrounded_blocks(w,h,plates)
 end
 
-def points_of_the_plaque(w,h,plates,plaque_index)
+def points_of_the_plate(plates_map,plate_index)
+	points = []
+	plates_map.each do |x,y,val|
+		points << [x,y] if val==plate_index
+	end
+	points
+end
+
+def arraymap_points_of_the_plaque(w,h,plates,plaque_index)
 	points = []
 	each_in_map(w,h,plates) do |x,y,val|
 		points << [x,y] if val==plaque_index

@@ -31,6 +31,8 @@ ARGV[2..-1].each do |arg|
 		$HEIGHT = value.to_i
 	when 'hps'
 		$N_HOT_POINTS = value.to_i
+	when 'dist'
+		$DISTURB_STRENGTH = value.to_i
 	else
 		error "Unknown param: #{name}"
 	end
