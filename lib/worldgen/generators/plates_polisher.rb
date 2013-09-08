@@ -23,30 +23,29 @@ ARGV[2..-1].each do |arg|
 	error "Unknown param: #{name}"
 end
 
-def perfom_polishing(width,height,plates)
-	polish_plates(width,height,plates)
+def perfom_polishing(plates)
+	polished_map = plates.duplicate($OUTPUT)
+	polish_plates(polished_map)
 
-	n_plaques = number_of_plaques(width,height,plates)
+	n_plates = number_of_plates(polished_map)
 	
 	if $SAVING
-		save_marshal_file($OUTPUT,plates)
+		polished_map.save
 	end
 
 	if $SHOW
-		colors = GraduatedColors.new n_plaques
+		colors = GraduatedColors.new n_plates
 		draw_code = Proc.new do |x,y|
-			plate_index = plates[y][x]		
+			plate_index = polished_map.get(x,y)		
 			colors.get plate_index
 		end
-		mf = MapFrame.new("Polished plates", width, height, draw_code)
+		mf = MapFrame.new("Polished plates", polished_map.width, polished_map.height, draw_code)
 		mf.launch
 	end
 end
 
-plates = load_marshal_file($INPUT)
+plates = Map.load($INPUT,:short)
 log "Unpolished plates loaded"
-width = map_width(plates)
-height = map_height(plates)
-perfom_polishing(width,height,plates)
+perfom_polishing(plates)
 
 puts "done."

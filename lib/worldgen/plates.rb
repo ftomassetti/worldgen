@@ -179,11 +179,11 @@ def disturb_distances_map(w,h,hot_points,distances_map,disturb_strength,seed)
 	end
 end
 
-def polish_plates(w,h,plates)
+def polish_plates(plates)
 	log "Breaking plates in blocks"
-	break_plates_in_blocks(w,h,plates)
+	break_plates_in_blocks(plates)
 	log "Inglobing surrounded block"
-	inglobe_surrounded_blocks(w,h,plates)
+	inglobe_surrounded_blocks(plates)
 end
 
 def points_of_the_plate(plates_map,plate_index)
@@ -202,40 +202,42 @@ def arraymap_points_of_the_plaque(w,h,plates,plaque_index)
 	points
 end
 
-def expand_around_point(w,h,map,block,p,val)
+def expand_around_point(map,block,p,val)
+	w = map.width
+	h = map.height
 	r = Rectangle.new w,h
 	each_around_limited(p) do |x,y|
 		p = [x,y]
 		#puts "Considering #{x},#{y} arounf #{p[0]},#{p[1]} #{r.include?([x,y])} #{map[y][x] == val}"
-		block << p if r.include?([x,y]) and (map[y][x] == val) and (not block.include?([x,y]))
+		block << p if r.include?([x,y]) and (map.get(x,y) == val) and (not block.include?([x,y]))
 	end
 end
 
-def expand_block(w,h,map,block,p,val)
+def expand_block(map,block,p,val)
 	block << p
 	i = 0
 	while i<block.count
 		puts "exp #{i}" if i%100==0
-		expand_around_point(w,h,map,block,block[i],val)
+		expand_around_point(map,block,block[i],val)
 		i+=1
 	end
 end
 
 # Each plaque having not contiguos points is broken
-def break_plates_in_blocks(w,h,plates)
-	n_plates = number_of_plates(w,h,plates)
+def break_plates_in_blocks(plates)
+	n_plates = number_of_plates(plates)
 	plaque_index=0
 	while plaque_index<n_plates
-		log "breaking plaque #{plaque_index}"
-		all_points = points_of_the_plaque(w,h,plates,plaque_index)
+		log "breaking plate #{plaque_index}"
+		all_points = points_of_the_plate(plates,plaque_index)
 		if all_points.count>0
 			start_point = all_points[0]
 			main_block = []
-			expand_block(w,h,plates,main_block,start_point,plaque_index)
+			expand_block(plates,main_block,start_point,plaque_index)
 			toremove = all_points.select {|p| not main_block.include? p}			
 			if toremove.count>0
-				log "plaque to be broken, #{toremove.count} points removed, #{main_block.count} kept"
-				toremove.each {|p| x,y=p; plates[y][x] = n_plates}
+				log "plate to be broken, #{toremove.count} points removed, #{main_block.count} kept"
+				toremove.each {|p| x,y=p; plates.set(x,y,n_plates)}
 				n_plates += 1				
 			end			
 		end
@@ -243,16 +245,16 @@ def break_plates_in_blocks(w,h,plates)
 	end
 end
 
-def get_first_neighbor_in_dir(w,h,plates,start_point,dir)
+def get_first_neighbor_in_dir(plates,start_point,dir)
 	x,y = start_point
-	my_plaque_index = plates[y][x]
+	my_plaque_index = plates.get(x,y)
 
 	while true
 		next_x = x+dir[0]
 		next_y = y+dir[1]
 		next_point = [next_x,next_y]
-		if Rectangle.new(w,h).include?(next_point)
-			other_plaque_index = plates[next_y][next_x]
+		if Rectangle.new(plates.width,plates.height).include?(next_point)
+			other_plaque_index = plates.get(next_x,next_y)
 			if other_plaque_index!=my_plaque_index
 				return other_plaque_index
 			else
@@ -265,17 +267,17 @@ def get_first_neighbor_in_dir(w,h,plates,start_point,dir)
 	end
 end
 
-def get_first_neighbors_in_all_dirs(w,h,plates,start_point)
-	[get_first_neighbor_in_dir(w,h,plates,start_point,[0,-1]),
-		get_first_neighbor_in_dir(w,h,plates,start_point,[1,0]),
-		get_first_neighbor_in_dir(w,h,plates,start_point,[0,1]),
-		get_first_neighbor_in_dir(w,h,plates,start_point,[-1,0])]
+def get_first_neighbors_in_all_dirs(plates,start_point)
+	[get_first_neighbor_in_dir(plates,start_point,[0,-1]),
+		get_first_neighbor_in_dir(plates,start_point,[1,0]),
+		get_first_neighbor_in_dir(plates,start_point,[0,1]),
+		get_first_neighbor_in_dir(plates,start_point,[-1,0])]
 end
 
-def container_inglobing_points(w,h,plates,all_points)
+def container_inglobing_points(plates,all_points)
 	all_neighbors = []
 	all_points.each do |p|
-		new_neighbours = get_first_neighbors_in_all_dirs(w,h,plates,p)
+		new_neighbours = get_first_neighbors_in_all_dirs(plates,p)
 		new_neighbours.select {|v| v!=nil}.each {|v| all_neighbors << v unless all_neighbors.include?(v)}
 		if all_neighbors.count>1
 			return nil # more than one neighbour
@@ -287,17 +289,17 @@ def container_inglobing_points(w,h,plates,all_points)
 end
 
 # If a glob is totally contained by another block, the inner block become part of the outer block
-def inglobe_surrounded_blocks(w,h,plates)
-	n_plates = number_of_plates(w,h,plates)
+def inglobe_surrounded_blocks(plates)
+	n_plates = number_of_plates(plates)
 	n_plates.times do |plaque_index|
 		log "considering for inglobation #{plaque_index}"
-		all_points = points_of_the_plaque(w,h,plates,plaque_index)		
+		all_points = points_of_the_plate(plates,plaque_index)		
 		if all_points.count>0						
-			parent = container_inglobing_points(w,h,plates,all_points)
+			parent = container_inglobing_points(plates,all_points)
 			if parent
 				# ok, inglobe
 				log "Going to inglone #{plaque_index} in #{parent}"
-				all_points.each {|p| x,y=p; plates[y][x] = parent}
+				all_points.each {|p| x,y=p; plates.set(x,y,parent)}
 			end
 		end
 	end
